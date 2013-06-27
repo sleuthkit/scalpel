@@ -39,6 +39,7 @@ base_name (char const *name)
     // try Windows-style
     base = strrchr(name, '\\');
     if (base != NULL) {
+        base++;
         if (*(base) == '\0')
             return NULL;
         else
