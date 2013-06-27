@@ -1,0 +1,79 @@
+CC = g++
+CC_OPTS = -Wall -g -O2
+GOAL_EXE = scalpel
+GOAL_LIB = libscalpel
+
+CC += $(CC_OPTS) 
+   .c.o: 
+	$(CC) -c $<
+
+AR = ar
+AR_FLAGS = rcs
+
+MAKEFILE = Makefile.win
+
+HEADER_FILES = src/scalpel.h src/common.h src/syncqueue.h src/prioque.h src/dirname.h src/input_reader.h src/types.h src/base_name.h
+SRC =  src/helpers.cpp src/syncqueue.cpp src/files.cpp src/scalpel.cpp src/dig.cpp src/prioque.cpp src/base_name.cpp src/input_reader.cpp
+OBJS =  helpers.o syncqueue.o files.o scalpel.o  dig.o prioque.o base_name.o input_reader.o 
+WIN32-INCLUDES = -Isrc -Itre-0.7.5-win32/lib -Ipthreads-win32
+WIN32-LIBS = -liberty -L. -Ltre-0.7.5-win32/lib -L pthreads-win32 -lpthreadGC2 -ltre-4
+NONWIN32-LIBS = -lpthread -lm -ltre
+
+
+SCALPEL_EXEC_SRC = src/scalpel_exec.cpp
+SCALPEL_EXEC_OBJS = src/scalpel_exec.o
+
+LIBSCALPEL_EXEC = libscalpel_test
+LIBSCALPEL_EXEC_SRC = src/libscalpel_test.cpp
+LIBSCALPEL_EXEC_OBJS = src/libscalpel_test.o
+
+LIBSCALPEL_JNI = libscalpel_jni
+LIBSCALPEL_JNI_SRC = jni/libscalpel_jni.cpp
+LIBSCALPEL_JNI_OBJS = jni/libscalpel_jni.o
+
+all: win32 libwin32_static libwin32_static_test libwin32_jni
+
+
+#libwin32_dyn: CC += -D__BUILDING_DLL -D__WIN32 $(WIN32-INCLUDES)
+#libwin32_dyn: $(SRC) $(HEADER_FILES)
+#	$(CC) -DBUILDING_DLL --shared -fvisibility=hidden -o $(GOAL_LIB).dll $(SRC) $(WIN32-LIBS) -Wl,--out-implib,$(GOAL_LIB).lib
+
+
+libwin32_static_nomt: CC += -D__WIN32 $(WIN32-INCLUDES)
+libwin32_static_nomt: $(SRC) $(HEADER_FILES)
+	$(CC) -DSINGLE_THREADING -c $(SRC) $(WIN32-LIBS)
+	$(AR) $(AR_FLAGS)  $(GOAL_LIB)-nomt.a $(OBJS)
+
+
+libwin32_static: CC += -D__WIN32 $(WIN32-INCLUDES)
+libwin32_static: $(SRC) $(HEADER_FILES)
+	$(CC) -c $(SRC) $(WIN32-LIBS)
+	$(AR) $(AR_FLAGS)  $(GOAL_LIB).a $(OBJS)
+
+libwin32_static_test: CC += -D__WIN32 $(WIN32-INCLUDES)
+libwin32_static_test: $(LIBSCALPEL_EXEC_SRC) $(HEADER_FILES) libwin32_static
+	$(CC) -static-libgcc -static-libstdc++ -o $(LIBSCALPEL_EXEC).exe $(LIBSCALPEL_EXEC_SRC) $(WIN32-LIBS) $(GOAL_LIB).a
+
+libwin32_jni: CC += -D__WIN32 $(WIN32-INCLUDES)
+libwin32_jni: $(LIBSCALPEL_JNI_SRC) $(HEADER_FILES) libwin32_static
+	$(CC) -Wall -D_JNI_IMPLEMENTATION_ -Wl,--kill-at --shared -static-libgcc -static-libstdc++ -fvisibility=hidden -I"$(JDK_HOME)\include" -I"$(JDK_HOME)\include\win32" -I"$(JDK_HOME)\include\win32\bridge" -o $(LIBSCALPEL_JNI).dll $(LIBSCALPEL_JNI_SRC) $(WIN32-LIBS) $(GOAL_LIB).a -Wl,--out-implib,$(LIBSCALPEL_JNI).lib
+
+win32: CC += -D__WIN32 $(WIN32-INCLUDES)
+win32: $(SCALPEL_EXEC_SRC) $(HEADER_FILES) libwin32_static
+	$(CC) -static-libgcc -static-libstdc++ -o $(GOAL_EXE).exe $(SCALPEL_EXEC_SRC) $(WIN32-LIBS) $(GOAL_LIB).a
+
+scalpel.o: scalpel.cpp $(HEADER_FILES) $(MAKEFILE)
+dig.o: dig.cpp $(HEADER_FILES) $(MAKEFILE)
+helpers.o: helpers.cpp $(HEADER_FILES) $(MAKEFILE)
+files.o: files.cpp $(HEADER_FILES) $(MAKEFILE)
+prioque.o: prioque.cpp prioque.h $(MAKEFILE)
+syncqueue.o: syncqueue.cpp syncqueue.h $(MAKEFILE)
+input_reader.o: input_reader.cpp input_reader.h $(MAKEFILE)
+scalpel_exec.o: scalpel_exec.cpp scalpel.h $(MAKEFILE)
+libscalpel_jni.o: libscalpel_jni.cpp libscalpel_jni.h $(HEADER_FILES) $(MAKEFILE)
+
+nice:
+	rm -rf scalpel-output
+
+clean: nice
+	rm -f $(OBJS) $(GOAL_LIB).a $(GOAL_LIB).lib $(GOAL_LIB)-nomt.a $(GOAL_LIB)-nomt.lib $(GOAL_LIB).dll $(GOAL_EXE) $(GOAL_EXE).exe $(LIBSCALPEL_EXEC) $(LIBSCALPEL_EXEC).exe

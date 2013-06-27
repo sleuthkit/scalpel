@@ -1,0 +1,162 @@
+.TH SCALPEL "1" "v2.0 - April 2011" "Digital Forensics Solutions" "Digital Forensics Solutions" 
+
+.SH NAME
+scalpel \- Recover files or data fragments from a disk image using file type-specific patterns
+
+.SH SYNOPSIS
+.B scalpel
+[\fB-b\fR]
+[\fB-c\fR <config file>]
+[\fB-d\fR]
+[\fB-e\fR]
+[\fB-h\fR]
+[\fB-i\fR <file>]
+[\fB-n\fR]
+[\fB-o\fR <dir>] 
+[\fB-O\fR] 
+[\fB-p\fR]
+[\fB-q\fR <clustersize>]
+[\fB-r\fR]
+[\fB-V\fR]
+[\fB-v\fR]
+[\fIFILES\fR]...
+
+.SH DESCRIPTION
+.PP
+Recover files from a disk image or raw block device based on headers 
+and footers specified by the user.
+
+.TP
+\fB\-b\fR
+Carve files even if defined footers aren't discovered within
+maximum carve size for file type [foremost 0.69 compat mode].
+This option may help when fragmentary evidence is useful, but will 
+increase the number of false positives.
+
+.TP
+\fB-c\fR \fIfile\fR
+Chooses which configuration file to use. If this option is omitted,
+then "scalpel.conf" in the current directory is used. The format for
+the configuration file is described in the default configuration
+file "scalpel.conf".  See the \fICONFIGURATION FILE\fR
+section below for more information.
+
+.TP
+\fB-d\fR 
+Generate header/footer database.  This option forces Scalpel
+to discover all headers and footers and write header/footer locations
+to a text file.  Since certain optimizations are bypassed when all
+footers must be discovered, performance will suffer.  This option does
+not affect the set of files that are carved.
+
+.TP
+\fB\-e\fR
+Do nested header/footer matching, to deal with structured files that may
+contain embedded files of the same type.  Applicable only to
+FORWARD / NEXT patterns.
+
+.TP
+\fB\-h\fR
+Show a help screen and exit.
+
+.TP
+\fB\-i\fR \fIfile\fR
+\fIfile\fR is used as a list of input files to examine. Each
+line in the specified file should contain a single filename.
+
+.TP
+\fB-o\fR \fIdirectory\fR
+Recovered files are written to the directory
+\fIdirectory\fR.   Scalpel requires that this directory
+be either empty or not exist.  The directory will be created
+if necessary.
+
+.TP
+\fB-n\fR
+Don't add extensions to extracted files.
+
+.TP
+\fB-o\fR
+Set output directory for carved files.  Scalpel will only
+write carved files to an empty output directory.  "scalpel-output" in
+the current directory is the default if this option is not specified.
+
+.TP
+\fB-O\fR
+Don't organize carved files by type. By default, scalpel
+organizes carved files into subdirectories, by type.
+
+.TP
+\fB-p\fR 
+Perform an image file preview.  When this option is
+specified, the audit log indicates which files would have been carved,
+but no files are actually carved.  This option also supports in-place
+file carving.
+
+.TP
+\fB-q\fR
+Carve files only when the header is cluster-aligned. If you
+aren't interested in carving files embedded within other file types,
+this option should be used, as it significantly reduces the false
+positive rate.
+
+.TP
+\fB\-r\fR
+Find only first of overlapping headers/footers [foremost
+0.69 compat mode].  This option is rarely needed.
+
+.TP
+\fB\-V\fR
+Show copyright information and exit.
+
+.TP
+\fB\-v\fR
+Enables verbose mode. This causes copious amounts of debugging information
+to be output.
+
+.PP
+
+.SH CONFIGURATION FILE
+The configuration file is used to control the types of files Scalpel
+will attempt to carve.  A sample configuration file, "scalpel.conf",
+is included with this distribution. For each file type, the
+configuration file describes the file's extension, whether the header
+and footer are case sensitive, the minimum and maximum file sizes, and
+the header and footer for the file. Minimum carve sizes and footer
+fields are optional, but the header, maximum size, case sensitivity,
+and extension fields are required.
+
+Any line in the configuration file that begins with a pound sign is 
+considered a comment and ignored. Please see the documentation in
+the sample configuration file for more information.
+
+.SH AUTHORS
+Written by Golden G. Richard III and Lodovico Marziale.  The first
+version of Scalpel was based on foremost 0.69, which was written by
+Special Agent Kris Kendall and Special Agent Jesse Kornblum of the
+United States Air Force Office of Special Investigations.
+
+.SH BUGS
+It is currently not possible to carve block devices directly using
+the Windows version of Scalpel.  This may be addressed in a future release.
+
+.PP
+
+.SH "REPORTING BUGS"
+When submitting a bug report, please include a description
+of the problem, how you found it, and your contact information.
+.PP
+Send bug reports to:
+.br
+scalpel@digitalforensicssolutions.com 
+.PP
+.SH COPYRIGHT
+.PP
+This is free software.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+.SH "SEE ALSO"
+More information on Scalpel appears in the README file, distributed
+with the Scalpel source code.
+.PP
+

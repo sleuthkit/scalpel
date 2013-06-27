@@ -1,0 +1,133 @@
+********************************************************************
+
+As of 6/27/213 Scalpel has been released under the Apache 2.0 License
+and the source is available at The Sleuth Kit github repository.
+
+Bug reports, comments, complaints, and feature requests should be
+directed to sleuthkit-users@lists.sourceforge.net.
+
+********************************************************************
+
+Scalpel is a file carving and indexing application that runs on Linux
+and Windows.  The first version of Scalpel, released in 2005, was
+based on Foremost 0.69. There have been a number of internal releases
+since the last public release, 1.60, primarily to support our own
+research.  The newest public release v2.0, has a number of additional
+features, including:
+
+o minimum carve sizes.
+
+o multithreading for quicker execution on multicore CPUs.
+
+o asynchronous I/O that allows disk operations to overlap with pattern
+matching--this results in a substantial performance improvement.
+
+o regular expression support for headers/footers.
+
+o embedded header/footer matching for better processing of structured
+file types that may contain embedded files.
+
+o for advanced users, support for massively-threaded execution on
+Graphics Processing Units (GPUs).  This feature is available only on
+Linux and requires installation of the NVIDIA CUDA SDK, modification
+of scalpel.h to enable the GPU threading mode, and compilation with
+the CUDA toolchain.  Our implementation also requires an NVIDIA GPU
+with compute capability >= 1.2, so older CUDA-capable cards probably
+won't work.  The NVIDIA GTX 260 is relatively inexpensive and powerful
+and has the appropriate compute capability.  The GPU-enhanced version
+of Scalpel is able to do preview carving at rates that exceed the disk
+bandwidth of most file servers, so for big jobs, it may be worth the
+extra effort required to use this feature.  Note that regular
+expression-based headers and footers are NOT currently supported when
+GPU acceleration is in use!  We might address this in a future
+release.
+
+Scalpel performs file carving operations based on patterns that
+describe particular file or data fragment "types".  These patterns may
+be based on either fixed binary strings or regular expressions.  A
+number of default patterns are included in the configuration file
+included in the distribution, "scalpel.conf".  The comments in the
+configuration file explain the format of the file carving patterns
+supported by Scalpel.
+
+Important note: The default configuration file, "scalpel.conf", has
+all supported file patterns commented out--you must edit this file
+before running Scalpel to activate some patterns.  Resist the urge to
+simply uncomment all file carving patterns; this wastes time and will
+generate a huge number of false positives.  Instead, uncomment only
+the patterns for the file types you need.
+
+Scalpel options are described in the Scalpel man page, "scalpel.1".
+You may also execute Scalpel w/o any command line arguments to see a
+list of options.
+
+NOTE: Compilation is necessary on Unix platforms and on Mac OS X.  For
+Windows platforms, a precompiled scalpel.exe is provided.  If you do
+wish to recompile Scalpel on Windows, you'll need a mingw (gcc)
+setup. Scalpel will not compile using Visual Studio C compilers.  Note
+that our compilation environment for Windows is currently 32-bit; we
+haven't tested on the 64-bit version of mingw, but will address this
+int the future.
+
+COMPILE INSTRUCTIONS ON SUPPORTED PLATFORMS:
+
+Linux/Mac OS X:    ./configure and then make
+
+Windows:           cd to src directory and then:
+
+	           mingw32-make -f Makefile.win
+
+and enjoy.  If you want to install the binary and man page in a more
+permanent place, just copy "scalpel" (or "scalpel.exe") and
+"scalpel.1" to appropriate locations, e.g., on Linux, "/usr/local/bin"
+and "/usr/local/man/man1", respectively.  On Windows, you'll also need
+to copy the pthreads and tre regular expression library dlls into the
+same directory as "scalpel.exe".
+
+
+OTHER SUPPORTED PLATFORMS
+
+We are not currently supporting Scalpel on Unix variants other than
+Linux. Go ahead and try a ./configure and make and see what happens,
+but be sure to do thorough testing before using Scalpel in production
+work.  If you are interested in supporting a version of Scalpel on an
+alternate platforms, please contact us.  If you are interested in
+supporting a GPU-enhanced version of Scalpel on Windows, we are also
+interesting in hearing from you.
+
+
+LIMITATIONS:
+
+Carving Windows physical and logical device files (e.g.,
+\\.\physicaldrive0 or \\.\c:) isn't currently supported because it
+requires us to rewrite some portions of Scalpel to use Windows file
+I/O functions rather than standard Unix calls.  This may be supported
+in a future release.
+
+Block map features are currently disabled, as we are rewriting this
+subsystem to enhance interoperability with the Sleuthkit.  An improved
+version of the block map features will return in a subsequent release.
+The -s command line option ("skip") has been removed and will be
+replaced with a more robust facility in the next major release.
+
+
+DEPENDENCIES:
+
+Scalpel uses the POSIX threads library.  On Win32, Scalpel is
+distributed with the Pthreads-win32 - POSIX Threads Library for Win32,
+which is Copyright(C) 1998 John E. Bossom and Copyright(C) 1999,2005
+by Pthreads-win32 contributors.  This library is licensed under the LGPL.
+
+Scalpel for Win32 uses the tre regular expression library and is
+distributed with tre-0.7.5, which is licensed under the LGPL.
+
+Cheers,
+
+--Golden and Vico.
+
+
+
+
+
+
+

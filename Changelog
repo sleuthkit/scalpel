@@ -1,0 +1,145 @@
+1.4:	First public beta release.
+1.5:	Added "-b" option for complete carving compability with
+	foremost 0.69.
+1.51:	Fixed a problem with Scalpel not carving all files near the end of
+	some large images. The locations of the files was detected, but an
+	optimization to minimize reads on pass 2 caused the files not to
+	be written (and not to be noted in the Scalpel log).  Also, more
+	work to bring the Win32 version into compliance.  Fixed problem
+	with Win32 version reporting "Couldn't measure size of image file"
+	for large images--required ftello64()/fseeko64() under mingw.
+	40+GB images have now been carved successfully under Win32.  Fixed
+	format of offset in log file for large offsets under Win32; the
+	printf() implementation in mingw under Windows doesn't support
+	"%llu" for unsigned long long integers--needs "%I64u".  Blech.
+1.52	Foremost 0.69 didn't discover overlapping headers/footers.  If you want
+	this behavior, use "-r" on the command line.  Scalpel's default
+	behavior is now to discover all headers/footers, even if they
+	overlap.  Different Quicktime needles (from the 'file' command's
+	magic file) are now used in the configuration file, because the
+	default Foremost needles didn't seem to match valid Quicktime
+	files.  The needles are still weak, in that they cause a bunch of
+	false positives.  The configuration file now uses more
+	reasonable (in my opinion) maximum carve sizes.  By default, all
+	file types are still commented out.
+1.53	Verbose mode implemented.  "-v" outputs copious (too much?) information
+	about what Scalpel is doing as files are carved.  Mac OS X is now
+	supported, including the use of raw block devices
+	(e.g., /dev/disk0) as carve targets.  Use "make bsd" for an OS X
+	compilation.  NOTE: As of version 2.0, this support is now
+	deprecated, but may be reintroduced in the future.
+1.54	Maximum size for carved files is now 18 exabytes. Minor changes to
+	Makefile. Fixed minor formatting problem in audit log.  Scalpel
+	man page created.  Eliminated duplicate error messages when
+	targets could not be opened.  Thanks to John Vigo for additional
+	MAC OS X testing on this release.
+1.60	Changes in this release include:
+
+	o Some of the headers and footers in the default
+	'scalpel.conf' file have been improved.  In particular, the
+	GIF89 footer was made less restrictive; GIF89 files were
+	encountered in the wild for which the legacy Foremost footer
+	was too restrictive.
+
+	o REVERSE carving semantics now fixed as "helpers.c"
+	functions continue to evolve from their Foremost roots; this
+	is mostly useful for PDF carving and when some carved files
+	appear to be truncated--e.g., many times GIF files will
+	contain the footer string internally and with FORWARD carving,
+	will be truncated.  REVERSE carving can help, but at the
+	expense of occasionally carving overly large files.
+
+	o Removed obsolete option "-f".
+
+	o Maximum number of files that can be carved per file type is
+	now 18,446,744,073,709,551,616.  This is also the maximum
+	number of files of all combined types that can be carved in
+	a single run.  This is unlikely to be a problematic upper
+	bound in the near term.
+
+	o The "-q" command line option is now available to force
+	block-aligned carving; only files with headers that begin on
+	block boundaries are carved.  The block size for this mode is
+	user-specified.
+
+	o The "-r" option was not accepted in recent releases due to
+	an omission in Scalpel's command line argument parsing.  This
+	option isn't generally used except for compatibility testing
+	with Foremost 0.69 (it actually forces Scalpel to mimic some
+	buggy Foremost behavior) and should be considered deprecated.
+	In a future release of Scalpel, it will be removed.
+
+	o Scalpel now organizes carved files into subdirectories by
+	type (and for each type, additional subdirectories are created
+	with a maximum of MAX_FILES_PER_SUBDIRECTORY [default: 5000]
+	files each).  This will allow you to more comfortably explore
+	the set of carved files using the Windows or Linux file
+	explorers without having them choke on large subdirectories.
+	The files are organized within the Scalpel output directory
+	into subdirectories with the following naming convention:
+
+	suffix-rule#-counter
+	suffix-rule#-counter
+	...
+	suffix-rule#-counter
+
+	where 'suffix' matches the suffix specified in the Scalpel
+	configuration file (e.g, "jpg"), 'rule#' is the index of the
+	corresponding rule in the configuration file (with the first
+	uncommented rule being 0), and 'counter' being incremented after
+	every MAX_FILES_PER_SUBDIRECTORY files corresponding to a rule are
+	carved.
+
+	You can turn off this default organization by using the "-O"
+	command line flag (then Scalpel acts as in previous releases
+	and dumps all carved files into a single output directory).  
+
+	o The "-p" performs a "preview" carve, creating an audit file
+	indicating which files would be carved, but without performing
+	carving operations.  This substantially increases execution speed
+	and also supports "in-line" carving, when used in conjunction with
+	our custom FUSE filesystem.
+
+	o A memory corruption error when Scalpel had large numbers of
+	files open (typically, when a large number of file types were
+	specified in the configuration file) was corrected.  Thanks to
+	both Doug Koster and Peter Theobald for pointing out this error.
+
+	o In this release some unused functions were removed
+	from the Scalpel source.
+
+	o A bug which arose for case-insensitive header/footer
+	specifications in the legacy Foremost Boyer-Moore string
+	search initialization was corrected.  Thanks to Doug Koster
+	for pointing out this bug.
+
+	o Fixed (slightly) garbled invocation string in audit file; this
+	resulted from an unitialized string in legacy Foremost code.
+
+	o The "-d", "-m", "-t", and "-u" options are experimental and are
+	part of evolving support for interaction between Scalpel and
+	external tools, with the goal being better support for recovery
+	of fragmented files.   Please contact the author -->
+	golden@digitalforensicssolutions.com <-- for more information if
+	these options appear useful to you.  More information will be provided
+	when the necessary external tools are released.
+1.70	Changes in this release include:
+
+	Multithreading for multi-core CPUs.  Threading models are selected
+	at compile-time, in scalpel.h.  Multithreading is supported on all
+	platforms.
+1.9 	Support for regular expressions in headers and footers implemented.
+	Multithreaded header/footer searches are now supported.
+1.91    -e option added, min carve sizes now supported, fixed pathname issues 
+	for header/footer database, more cleanup of error handling code
+	and audit file processing, and a copy of the config file is now
+	included in audit log to document the options used during a
+	carving job.
+2.0	Public release, with multithreading, asynchronous I/O, regular expression
+	support, minimum carve sizes.  Blockmap features are currently
+	removed, since they are being rewritten.  We have also deprecated
+	the -s option, since it is broken.  A new skip option based on
+	blockmaps will be introduced in the next major release and will
+	allow specific areas of disk images to be targeted for carving.
+
+X   Apache license, library design. 
