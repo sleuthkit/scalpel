@@ -12,7 +12,7 @@ AR_FLAGS = rcs
 
 MAKEFILE = Makefile.win
 
-HEADER_FILES = src/scalpel.h src/common.h src/syncqueue.h src/prioque.h src/dirname.h src/input_reader.h src/types.h src/base_name.h
+HEADER_FILES = src/scalpel.h src/common.h src/syncqueue.h src/prioque.h src/input_reader.h src/types.h src/base_name.h
 SRC =  src/helpers.cpp src/syncqueue.cpp src/files.cpp src/scalpel.cpp src/dig.cpp src/prioque.cpp src/base_name.cpp src/input_reader.cpp
 OBJS =  helpers.o syncqueue.o files.o scalpel.o  dig.o prioque.o base_name.o input_reader.o 
 WIN32-INCLUDES = -Isrc -Itre-0.7.5-win32/lib -Ipthreads-win32
