@@ -107,6 +107,8 @@ void syncqueue_destroy(syncqueue_t * q) {
   pthread_cond_destroy(q->notEmpty);
   free(q->notEmpty);
   q->notEmpty = NULL;
+  free(q->buf);
+  q->buf = NULL;
   free(q);
 }
 
