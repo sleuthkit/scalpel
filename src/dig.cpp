@@ -1743,6 +1743,7 @@ int carveImageFile(struct scalpelState *state) {
 	    free(carve->filename);
 	    carve->filename = NULL;
 	  }
+      free(carve);
 	}
       }
       next_element(&carvelists[(fileposition - bytesread) / SIZE_OF_BUFFER]);
@@ -2482,6 +2483,10 @@ static void *threadedFindAll(void *args) {
 
   regmatch_t *match;
 
+  // Allow this thread to be cancelled at any time.
+  int oldtype;
+  pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &oldtype);
+
   // wait for work
   //  sem_wait(&workavailable[id]);
 	
@@ -2737,8 +2742,12 @@ int init_threading_model(struct scalpelState *state) {
 void destroy_threading_model(struct scalpelState *state) {
 
 #ifdef MULTICORE_THREADING
-
 	 for(int i = 0; i < state->specLines; i++) {
+
+         // Kill the thread
+         pthread_cancel(searchthreads[i]);
+         pthread_join(searchthreads[i], NULL);
+         
 		 if (foundat) {
 			 free(foundat[i]);
 			 foundat[i]= NULL;
@@ -2754,8 +2763,7 @@ void destroy_threading_model(struct scalpelState *state) {
 	    }
 	    if (workcomplete) {
 	    	pthread_mutex_destroy(&workcomplete[i]);
-	    }
-
+	    }        
 	  }
 
 	if (workcomplete) {
