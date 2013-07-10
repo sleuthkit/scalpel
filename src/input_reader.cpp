@@ -231,9 +231,9 @@ static long long getSizeOpenFile(FILE * f) {
 		// assume device has 512 byte sectors
 		total = numsectors * 512;
 
-		free(info);
-
 	}
+
+	free(info);
 
 	// restore file position
 
