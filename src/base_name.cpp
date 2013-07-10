@@ -21,10 +21,10 @@
  * @param name Path to parse
  * @returns Pointer to start of file name or NULL if name ended in slash
  */
-char *
+char const *
 base_name (char const *name)
 {
-    char *base;
+    char const *base;
 
     // try unix-style
     base = strrchr(name, '/');
@@ -45,6 +45,6 @@ base_name (char const *name)
         else
             return base;
     }
-    return (char *) name;
+    return name;
 }
 
