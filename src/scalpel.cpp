@@ -186,11 +186,7 @@ int processSearchSpecLine(struct scalpelState *state, char *buffer,
 
 	char *buf = buffer;
 	char *token;
-	char **tokenarray = (char **) malloc(
-			6 * sizeof(char[MAX_STRING_LENGTH + 1]));
 	int i = 0, err = 0, len = strlen(buffer);
-
-	checkMemoryAllocation(state, tokenarray, __LINE__, __FILE__, "tokenarray");
 
 	// murder CTRL-M (0x0d) characters
 	//  if(buffer[len - 2] == 0x0d && buffer[len - 1] == 0x0a) {
@@ -229,6 +225,11 @@ int processSearchSpecLine(struct scalpelState *state, char *buffer,
 		return SCALPEL_OK;
 	}
 
+	char **tokenarray = (char **) malloc(
+			6 * sizeof(char[MAX_STRING_LENGTH + 1]));
+
+	checkMemoryAllocation(state, tokenarray, __LINE__, __FILE__, "tokenarray");
+
 	while (token && (i < NUM_SEARCH_SPEC_ELEMENTS)) {
 		tokenarray[i] = token;
 		i++;
@@ -250,6 +251,7 @@ int processSearchSpecLine(struct scalpelState *state, char *buffer,
 		"\nERROR: In line %d of the configuration file, expected %d tokens,\n"
 		"       but instead found only %d.\n",
 		lineNumber, NUM_SEARCH_SPEC_ELEMENTS, i);
+        free(tokenarray);
 		return SCALPEL_ERROR_NO_SEARCH_SPEC;
 		break;
 
@@ -276,6 +278,7 @@ int processSearchSpecLine(struct scalpelState *state, char *buffer,
 		}
 	}
 	state->specLines++;
+    free(tokenarray);
 	return SCALPEL_OK;
 }
 
@@ -368,6 +371,7 @@ void initializeState(char ** argv, struct scalpelState *state) {
 	// type.
 	sss = (MAX_FILE_TYPES + 1) * sizeof(struct SearchSpecLine);
 	state->SearchSpec = (struct SearchSpecLine *) malloc(sss);
+    memset(state->SearchSpec, 0, sss);
 	checkMemoryAllocation(state, state->SearchSpec, __LINE__, __FILE__,
 			"state->SearchSpec");
 	state->specLines = 0;
@@ -486,7 +490,7 @@ static void freeSearchSpec(struct SearchSpecLine *s) {
 
 
 void freeState(struct scalpelState *state) {
-return; //TODO @@@ validate freeState is correct then reenable
+//return; //TODO @@@ validate freeState is correct then reenable
 	if (state->inputFileList) {
 		free(state->inputFileList);
 		state->inputFileList = NULL;
@@ -600,7 +604,6 @@ int scalpel_carveSingleInput(ScalpelInputReader * const reader, const char * con
 		std::stringstream ss;
 		ss << "Error reading spec file, error code: " << err;
 		throw std::runtime_error(ss.str());
-		return -1;
 	}
 
 	// prepare audit file and make sure output directory is empty.
@@ -610,7 +613,6 @@ int scalpel_carveSingleInput(ScalpelInputReader * const reader, const char * con
 		std::stringstream ss;
 		ss << "Error opening audit file, error code: " << err;
 		throw std::runtime_error(ss.str());
-		return -1;
 	}
 
 	// Initialize the backing store of buffer to read-in, process image data.
@@ -621,34 +623,29 @@ int scalpel_carveSingleInput(ScalpelInputReader * const reader, const char * con
 
 	if ((err = digImageFile(&state))) {
 		handleError(&state, err); //can throw
-		std::stringstream ss;
-		ss << "Error digging file, error code: " << err;
-		throw std::runtime_error(ss.str());
 		closeAuditFile(state.auditFile);
 		destroyStore();
 		freeState(&state);
-		return -1;
+		std::stringstream ss;
+		ss << "Error digging file, error code: " << err;
+		throw std::runtime_error(ss.str());
 	}
 
 	if ((err = carveImageFile(&state))) {
 		handleError(&state, err); //can throw
-		std::stringstream ss;
-		ss << "Error carving file, error code: " << err;
-		throw std::runtime_error(ss.str());
 		closeAuditFile(state.auditFile);
 		destroy_threading_model(&state);
 		destroyStore();
 		freeState(&state);
-		return -1;
+		std::stringstream ss;
+		ss << "Error carving file, error code: " << err;
+		throw std::runtime_error(ss.str());
 	}
 
 	closeAuditFile(state.auditFile);
-
 	destroy_threading_model(&state);
 	destroyStore();
 	freeState(&state);
-
-
 
 	return SCALPEL_OK;
 }
