@@ -1175,16 +1175,15 @@ int digImageFile(struct scalpelState *state) {
   // The reader is now reading in chunks of the image. We call digbuffer on
   // these chunks for multi-threaded search. 
 
- while (true)
+ while (!reads_finished || !full_readbuf->empty)
   {
-	fprintf(stdout, " "); //needed for while loop to continue while some functions resolve
-	if (reads_finished && full_readbuf->empty) break;
+    fprintf(stdout, " ");
 	if (!full_readbuf->empty)
 	{
 	    readbuf_info *rinfo = (readbuf_info *)get(full_readbuf);
-        if (!full_readbuf->empty)  readbuffer = rinfo->readbuf; //TODO @@@ check for race cond. on this global var.
+        readbuffer = rinfo->readbuf; //TODO @@@ check for race cond. on this global var.
 		if((status =digBuffer(state, rinfo->bytesread, rinfo->beginreadpos)) != SCALPEL_OK) return status;
-		if (!full_readbuf->empty) put(empty_readbuf, (void *)rinfo);
+	    put(empty_readbuf, (void *)rinfo);
 	}
   }
 
