@@ -1177,7 +1177,7 @@ int digImageFile(struct scalpelState *state) {
 
  while (true)
   {
-		fprintf(stdout, " ");
+	fprintf(stdout, " "); //needed for while loop to continue while some functions resolve
 	if (reads_finished && full_readbuf->empty) break;
 	if (!full_readbuf->empty)
 	{
