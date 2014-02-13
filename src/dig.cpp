@@ -2491,10 +2491,6 @@ static void *threadedFindAll(void *args) {
 
   regmatch_t *match;
 
-  // Allow this thread to be cancelled at any time.
-  int oldtype;
-  pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &oldtype);
-
   // wait for work
   //  sem_wait(&workavailable[id]);
 	
@@ -2752,10 +2748,6 @@ void destroy_threading_model(struct scalpelState *state) {
 #ifdef MULTICORE_THREADING
 	 for(int i = 0; i < state->specLines; i++) {
 
-         // Kill the thread
-         pthread_cancel(searchthreads[i]);
-         pthread_join(searchthreads[i], NULL);
-         
 		 if (foundat) {
 			 free(foundat[i]);
 			 foundat[i]= NULL;
