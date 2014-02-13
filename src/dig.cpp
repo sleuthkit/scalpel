@@ -42,13 +42,13 @@ static syncqueue_t *full_readbuf;	// que of full buffers read from image
 static syncqueue_t *empty_readbuf;	// que of empty buffers
 static readbuf_info *readbuf_store; //read  buff stored here to free
 
-static sig_atomic_t reads_finished;
 //pthread_cond_t reader_done = PTHREAD_COND_INITIALIZER;
 
 #ifdef GPU_THREADING
 // GPU only threading globals
 syncqueue_t *results_readbuf;	// que of encoded results from gpu
 //pthread_cond_t gpu_handler_done = PTHREAD_COND_INITIALIZER;
+sig_atomic_t reads_finished;
 sig_atomic_t gpu_finished = FALSE;	// for thread synchronization
 char localpattern[MAX_PATTERNS][MAX_PATTERN_LENGTH];	// search patterns
 char locallookup_headers[LOOKUP_ROWS][LOOKUP_COLUMNS];	// header lookup table
@@ -979,8 +979,6 @@ void *streaming_reader(void *sss) {
   int displayUnits = UNITS_BYTES;
   int longestneedle = findLongestNeedle(state->SearchSpec);
 
-	reads_finished = FALSE;
-
   filebegin = scalpelInputTello(state->inReader);
   if((filesize = scalpelInputGetSize(state->inReader)) == -1) {
     fprintf(stderr,
@@ -1043,8 +1041,16 @@ void *streaming_reader(void *sss) {
   if (err != SCALPEL_OK) {
     handleError(state, err);
   }
+
   // Done reading image.
-  reads_finished = TRUE;
+  // get an empty buffer
+  rinfo = (readbuf_info *)get(empty_readbuf);
+  // mark as end of reads
+  rinfo->bytesread = 0;
+  rinfo->beginreadpos = 0;
+  // put in queue
+  put(full_readbuf, (void *)rinfo);
+
   if (scalpelInputIsOpen(state->inReader)) {
 	  scalpelInputClose(state->inReader);
   }
@@ -1124,7 +1130,6 @@ int digImageFile(struct scalpelState *state) {
   fprintf(stdout, "Image file pass 1/2.\n");
 
   // Create and start the streaming reader thread for this image file.
-  reads_finished = FALSE;
   pthread_t reader;
   if(pthread_create(&reader, NULL, streaming_reader, (void *)state) != 0) {
     return SCALPEL_ERROR_PTHREAD_FAILURE;
@@ -1175,13 +1180,16 @@ int digImageFile(struct scalpelState *state) {
   // The reader is now reading in chunks of the image. We call digbuffer on
   // these chunks for multi-threaded search. 
 
-  while (!reads_finished || !full_readbuf->empty) {
+  while (1) {
 
     readbuf_info *rinfo = (readbuf_info *)get(full_readbuf);
-    readbuffer = rinfo->readbuf; //TODO @@@ check for race cond. on this global var.
-    if((status =
-	digBuffer(state, rinfo->bytesread, rinfo->beginreadpos
-		  )) != SCALPEL_OK) {
+    if ((rinfo->bytesread == 0) && (rinfo->beginreadpos == 0)) {
+      // end of reads condition - we're done
+      break;
+    }
+    readbuffer = rinfo->readbuf;
+    if ((status = digBuffer(state, rinfo->bytesread, 
+                            rinfo->beginreadpos)) != SCALPEL_OK) {
       return status;
     }
     put(empty_readbuf, (void *)rinfo);
