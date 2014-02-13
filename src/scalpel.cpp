@@ -556,9 +556,10 @@ int libscalpel_initialize(scalpelState ** state, char * confFilePath,
 
     scalpelState * pState = new scalpelState(options);
     
-    char * argv[2];
+    char * argv[3];
     argv[0] = confFilePath;
     argv[1] = outDir;
+    argv[2] = NULL;
     
     initializeState(&argv[0], pState);
     
