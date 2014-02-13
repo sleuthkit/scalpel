@@ -660,6 +660,8 @@ int libscalpel_finalize(scalpelState ** state)
 }
 
 // the exposed libscalpel API
+// NOTE: This function is deprecated and will be removed. Use the
+// libscalpel_* functions instead.
 // TODO make the driver in scalpel_exec.c use this (minor refactoring needed)
 // TODO add support for the remaining options avail from cmd-line
 // returns SCALPEL_OK on no error, can throw runtime_error exception on errors
