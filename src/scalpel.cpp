@@ -425,14 +425,14 @@ void initializeState(char ** argv, struct scalpelState *state) {
 	state->invocation[0] = 0;
 
 	// copy the invocation string into the state
-	do {
-		strncat(state->invocation, *argvcopy,
-				MAX_STRING_LENGTH - strlen(state->invocation));
-		strncat(state->invocation, " ",
-				MAX_STRING_LENGTH - strlen(state->invocation));
-		++argvcopy;
+    do 
+    {
+        strncat(state->invocation, *argvcopy,
+                MAX_STRING_LENGTH - strlen(state->invocation));
+        strncat(state->invocation, " ",
+                MAX_STRING_LENGTH - strlen(state->invocation));
+        ++argvcopy;
 	} while (*argvcopy);
-
 }
 
 static void freeOffsets(SearchSpecOffsets * offsets) {
@@ -535,6 +535,128 @@ void convertFileNames(struct scalpelState *state) {
 		//		perror("realpath");
 	}
 
+}
+
+int libscalpel_initialize(scalpelState ** state, char * confFilePath, 
+                          char * outDir, const scalpelState & options)
+{
+    std::string funcname("libscalpel_initialize");
+    
+    if (state == NULL)
+        throw std::runtime_error(funcname + ": state argument must not be NULL.");
+        
+    if (*state != NULL)
+        throw std::runtime_error(funcname + ": state has already been allocated.");
+
+    if (outDir == NULL || strlen(outDir) == 0)
+        throw std::runtime_error(funcname + ": no output directory provided.");
+
+    if (confFilePath == NULL || strlen(confFilePath) == 0)
+        throw std::runtime_error(funcname + ": no configuration file path provided.");
+
+    scalpelState * pState = new scalpelState(options);
+    
+    char * argv[2];
+    argv[0] = confFilePath;
+    argv[1] = outDir;
+    
+    initializeState(&argv[0], pState);
+    
+    const size_t outDirLen = strlen(outDir);
+    strncpy(pState->outputdirectory, outDir, outDirLen + 1);
+    pState->outputdirectory[outDirLen + 1] = 0;
+    const size_t confFilePathLen = strlen(confFilePath);
+    strncpy(pState->conffile, confFilePath, confFilePathLen + 1);
+    pState->conffile[confFilePathLen + 1] = 0;
+    
+    convertFileNames(pState);
+
+    int err = 0;
+    
+    // prepare audit file and make sure output directory is empty.
+    if ((err = openAuditFile(pState))) {
+        handleError(pState, err); //can throw
+        std::stringstream ss;
+        ss << ": Error opening audit file, error code: " << err;
+        throw std::runtime_error(funcname + ss.str());
+    }
+
+    // read configuration file
+    if ((err = readSearchSpecFile(pState))) {
+        // problem with config file
+        handleError(pState, err); //can throw
+        std::stringstream ss;
+        ss << ": Error reading spec file, error code: " << err;
+        throw std::runtime_error(funcname + ss.str());
+    }
+
+    // Initialize the backing store of buffer to read-in, process image data.
+    init_store();
+
+    // Initialize threading model for cpu or gpu search.
+    init_threading_model(pState);
+
+    *state = pState;
+    
+    return SCALPEL_OK;
+}
+
+int libscalpel_carve_input(scalpelState * state, ScalpelInputReader * const reader)
+{
+    std::string funcname("libscalpel_carve_input");
+    
+    if (state == NULL)
+        throw std::runtime_error(funcname + ": NULL pointer provided for state.");
+    
+    if (reader == NULL)
+        throw std::runtime_error(funcname + ": NULL pointer provided for Reader.");
+        
+    if (!reader->dataSource || !reader->id) {
+        throw std::runtime_error(funcname + ": Reader datasource or id not set.");
+    }
+
+    if (!reader->open || !reader->read || !reader->seeko || !reader->tello
+            || !reader->close || !reader->getError || !reader->getSize) {
+        throw std::runtime_error(funcname + ": Reader callbacks not setup");
+    }
+
+    state->inReader = reader;
+
+    int err = 0;
+    
+    if ((err = digImageFile(state))) {
+        handleError(state, err); //can throw
+        std::stringstream ss;
+        ss << ": Error digging file, error code: " << err;
+        throw std::runtime_error(funcname + ss.str());
+    }
+
+    if ((err = carveImageFile(state))) {
+        handleError(state, err); //can throw
+        std::stringstream ss;
+        ss << ": Error carving file, error code: " << err;
+        throw std::runtime_error(funcname + ss.str());
+    }
+
+    return SCALPEL_OK;
+}
+
+int libscalpel_finalize(scalpelState ** state)
+{
+    std::string funcname("libscalpel_finalize");
+    
+    if (state == NULL)
+        throw std::runtime_error(funcname + ": state argument must not be NULL.");
+        
+    if (*state == NULL)
+        throw std::runtime_error(funcname + ": state has not been allocated.");
+
+    closeAuditFile((*state)->auditFile);
+    destroy_threading_model(*state);
+    destroyStore();
+    freeState(*state);
+
+    return SCALPEL_OK;
 }
 
 // the exposed libscalpel API

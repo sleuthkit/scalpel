@@ -22,38 +22,56 @@ Scalpel, in 2005.
 
 #include "scalpel.h"
 
-//test driver for libscalpel scalpel_carveSingleInput()
+// Test driver for scalpel library API
 
-//test driver for library function scalpel_carveSingleInput()
 int main(int argc, char ** argv) {
-	if (argc != 4) {
-		printf("usage: scalpel_lib_test confFilePath outDirPath inputFilePath\n");
+	if (argc < 4) {
+		printf("usage: libscalpel_test confFilePath outDirPath inputFilePath ...\n");
 		exit(-1);
 	}
 
 	printf("Testing scalpel lib with args %s %s %s\n", argv[1], argv[2], argv[3]);
-	ScalpelInputReader * inputReader = scalpel_createInputReaderFile(argv[3]);
-	if (!inputReader) {
-		//error
-		printf("Error creating inputReader for input file %s\n", argv[3]);
-		return 1;
-	}
+    
+    scalpelState * pScalpelState = NULL;
+    scalpelState options;
+	options.generateHeaderFooterDatabase = FALSE;
+	options.handleEmbedded = FALSE;
+	options.organizeSubdirectories = TRUE;
+	options.previewMode = FALSE;
+	options.carveWithMissingFooters = FALSE;
+	options.noSearchOverlap = FALSE;
 
-	try {
-	int scalpErr = scalpel_carveSingleInput(inputReader, argv[1], argv[2],
-			FALSE, FALSE, TRUE, FALSE, FALSE, FALSE);
+    if (libscalpel_initialize(&pScalpelState, argv[1], argv[2], options) != SCALPEL_OK)
+    {
+        printf("libscalpel initialization failed.\n");
+        exit(1);
+    }
+    
+    for (int i = 3; i < argc; ++i)
+    {
+        ScalpelInputReader * inputReader = scalpel_createInputReaderFile(argv[i]);
+        if (!inputReader) {
+            printf("Error creating inputReader for input file %s\n", argv[3]);
+            return 1;
+        }
 
-	printf("Done, libscalp result: %d\n", scalpErr);
-	}
-	catch (std::runtime_error & e) {
-		fprintf(stderr, "Error during carving: %s\n", e.what());
-	}
-	catch (...) {
-		fprintf(stderr, "Unexpected error during carving\n");
-	}
+        try {
+            int scalpErr = libscalpel_carve_input(pScalpelState, inputReader);
+            
+            printf("Done, libscalp result: %d\n", scalpErr);
+        }
+        catch (std::runtime_error & e) {
+            fprintf(stderr, "Error during carving: %s\n", e.what());
+        }
+        catch (...) {
+            fprintf(stderr, "Unexpected error during carving\n");
+        }
 
-	scalpel_freeInputReaderFile(inputReader);
+        scalpel_freeInputReaderFile(inputReader);
+    }
 
+    libscalpel_finalize(&pScalpelState);
+    
 	return 0;
 }
 

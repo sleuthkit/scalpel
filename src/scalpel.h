@@ -293,7 +293,6 @@ typedef struct SearchSpecLine {
   // of files of this type
 } SearchSpecLine;
 
-
 //prototype for external carving function
 extern int scalpel_carveSingleInput(ScalpelInputReader * const reader,
 		const char * const confFilePath,
@@ -347,6 +346,11 @@ typedef struct Fragment {
   unsigned long long stop;
 } Fragment;
 
+// Interface for using scalpel as a library
+extern int libscalpel_initialize(scalpelState ** state, char * confFilePath, 
+                                 char * outDir, const scalpelState& options);
+extern int libscalpel_carve_input(scalpelState * state, ScalpelInputReader * const reader);
+extern int libscalpel_finalize(scalpelState ** state);
 
 // prototypes for visible scalpel.c functions
 void freeState(struct scalpelState *state);
