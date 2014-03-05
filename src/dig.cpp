@@ -1211,605 +1211,637 @@ int digImageFile(struct scalpelState *state) {
 
 int carveImageFile(struct scalpelState *state) {
 
-  int openErr;
-  struct SearchSpecLine *currentneedle;
-  struct CarveInfo *carveinfo;
-  char fn[MAX_STRING_LENGTH];	// temp buffer for output filename
-  char orgdir[MAX_STRING_LENGTH];	// buffer for name of organizing subdirectory
-  long long start, stop;	// temp begin/end bytes for file to carve
-  unsigned long long prevstopindex;	// tracks index of first 'reasonable' 
-  // footer
-  int needlenum;
-  long long filesize = 0, bytesread = 0, fileposition = 0, filebegin = 0;
-  long err = 0;
-  int displayUnits = UNITS_BYTES;
-  int success = 0;
-  long long i, j;
-  int halt;
-  char chopped;			// file chopped because it exceeds
-  // max carve size for type?
-  int CURRENTFILESOPEN = 0;	// number of files open (during carve)
-  unsigned long long firstcandidatefooter=0;
+    int openErr;
+    struct SearchSpecLine *currentneedle;
+    struct CarveInfo *carveinfo;
+    char fn[MAX_STRING_LENGTH];	// temp buffer for output filename
+    char orgdir[MAX_STRING_LENGTH];	// buffer for name of organizing subdirectory
+    long long start, stop;	// temp begin/end bytes for file to carve
+    unsigned long long prevstopindex;	// tracks index of first 'reasonable' 
+    // footer
+    int needlenum;
+    long long filesize = 0, bytesread = 0, fileposition = 0, filebegin = 0;
+    long err = 0;
+    int displayUnits = UNITS_BYTES;
+    int success = 0;
+    long long i, j;
+    int halt;
+    char chopped;			// file chopped because it exceeds
+    // max carve size for type?
+    int CURRENTFILESOPEN = 0;	// number of files open (during carve)
+    unsigned long long firstcandidatefooter=0;
 
-  // index of header and footer within image file, in SIZE_OF_BUFFER
-  // blocks
-  unsigned long long headerblockindex, footerblockindex;
+    // index of header and footer within image file, in SIZE_OF_BUFFER
+    // blocks
+    unsigned long long headerblockindex, footerblockindex;
 
-  struct Queue *carvelists;	// one entry for each SIZE_OF_BUFFER bytes of
-  // input file
-//  struct timeval queuenow, queuethen;
+    struct Queue *carvelists;	// one entry for each SIZE_OF_BUFFER bytes of
+    // input file
+    //  struct timeval queuenow, queuethen;
 
-  // open image file and get size so carvelists can be allocated
-  if((openErr = scalpelInputOpen(state->inReader)) != 0 ) {
-    fprintf(stderr, "ERROR: Couldn't open input file: %s -- %s\n",
-	    (*(scalpelInputGetId(state->inReader)) == '\0') ? "<blank>"
-	    		: scalpelInputGetId(state->inReader),
-	    strerror(errno));
-    return SCALPEL_ERROR_FILE_OPEN;
-  }
-
-  // If skip was activated, then there's no way headers/footers were
-  // found there, so skip during the carve operations, too
-
-  if(state->skip > 0) {
-    if(!skipInFile(state, state->inReader)) {
-      return SCALPEL_ERROR_FILE_READ;
+    // open image file and get size so carvelists can be allocated
+    if((openErr = scalpelInputOpen(state->inReader)) != 0 ) {
+        fprintf(stderr, "ERROR: Couldn't open input file: %s -- %s\n",
+            (*(scalpelInputGetId(state->inReader)) == '\0') ? "<blank>"
+            : scalpelInputGetId(state->inReader),
+            strerror(errno));
+        return SCALPEL_ERROR_FILE_OPEN;
     }
-  }
 
-  filebegin = scalpelInputTello(state->inReader);
-  if((filesize = scalpelInputGetSize(state->inReader)) == -1) {
-    fprintf(stderr,
-	    "ERROR: Couldn't measure size of image file %s\n",
-	    scalpelInputGetId(state->inReader));
-    return SCALPEL_ERROR_FILE_READ;
-  }
+    // If skip was activated, then there's no way headers/footers were
+    // found there, so skip during the carve operations, too
+
+    if(state->skip > 0) {
+        if(!skipInFile(state, state->inReader)) {
+            return SCALPEL_ERROR_FILE_READ;
+        }
+    }
+
+    filebegin = scalpelInputTello(state->inReader);
+    if((filesize = scalpelInputGetSize(state->inReader)) == -1) {
+        fprintf(stderr,
+            "ERROR: Couldn't measure size of image file %s\n",
+            scalpelInputGetId(state->inReader));
+        return SCALPEL_ERROR_FILE_READ;
+    }
 
 
-//  gettimeofday(&queuethen, 0);
+    //  gettimeofday(&queuethen, 0);
 
-  // allocate memory for carvelists--we alloc a queue for each
-  // SIZE_OF_BUFFER bytes in advance because it's simpler and an empty
-  // queue doesn't consume much memory, anyway.
+    // allocate memory for carvelists--we alloc a queue for each
+    // SIZE_OF_BUFFER bytes in advance because it's simpler and an empty
+    // queue doesn't consume much memory, anyway.
 
-  carvelists =
-    (Queue *) malloc(sizeof(Queue) * (2 + (filesize / SIZE_OF_BUFFER)));
-  checkMemoryAllocation(state, carvelists, __LINE__, __FILE__, "carvelists");
+    carvelists =
+        (Queue *) malloc(sizeof(Queue) * (2 + (filesize / SIZE_OF_BUFFER)));
+    checkMemoryAllocation(state, carvelists, __LINE__, __FILE__, "carvelists");
 
-  // queue associated with each buffer of data holds pointers to
-  // CarveInfo structures.
+    // queue associated with each buffer of data holds pointers to
+    // CarveInfo structures.
 
-  fprintf(stdout, "Allocating work queues...\n");
+    fprintf(stdout, "Allocating work queues...\n");
 
-  for(i = 0; i < 2 + (filesize / SIZE_OF_BUFFER); i++) {
-    init_queue(&carvelists[i], sizeof(struct CarveInfo *), TRUE, 0, TRUE);
-  }
-  fprintf(stdout, "Work queues allocation complete. Building work queues...\n");
+    for(i = 0; i < 2 + (filesize / SIZE_OF_BUFFER); i++) {
+        init_queue(&carvelists[i], sizeof(struct CarveInfo *), TRUE, 0, TRUE);
+    }
+    fprintf(stdout, "Work queues allocation complete. Building work queues...\n");
 
-  // build carvelists before 2nd pass over image file
+    // build carvelists before 2nd pass over image file
 
-  for(needlenum = 0; needlenum < state->specLines; needlenum++) {
+    for(needlenum = 0; needlenum < state->specLines; needlenum++) {
 
-    currentneedle = &(state->SearchSpec[needlenum]);
+        currentneedle = &(state->SearchSpec[needlenum]);
 
-    // handle each discovered header independently
+        // handle each discovered header independently
 
-    prevstopindex = 0;
-    for(i = 0; i < (long long)currentneedle->offsets.numheaders; i++) {
-      start = currentneedle->offsets.headers[i];
+        prevstopindex = 0;
+        for(i = 0; i < (long long)currentneedle->offsets.numheaders; i++) {
+            start = currentneedle->offsets.headers[i];
 
-			////////////// DEBUG ////////////////////////
-			//fprintf(stdout, "start: %lu\n", start);
-			
-      // block aligned test for "-q"
+            ////////////// DEBUG ////////////////////////
+            //fprintf(stdout, "start: %lu\n", start);
 
-      if(state->blockAlignedOnly && start % state->alignedblocksize != 0) {
-	continue;
-      }
+            // block aligned test for "-q"
 
-      stop = 0;
-      chopped = 0;
+            if(state->blockAlignedOnly && start % state->alignedblocksize != 0) {
+                continue;
+            }
 
-      // case 1: no footer defined for this file type
-      if(!currentneedle->endlength) {
+            stop = 0;
+            chopped = 0;
 
-	// this is the unfortunate case--if file type doesn't have a footer,
-	// all we can done is carve a block between header position and
-	// maximum carve size.
-	stop = start + currentneedle->length - 1;
-	// these are always considered chopped, because we don't really
-	// know the actual size
-	chopped = 1;
-      }
-      else if(currentneedle->searchtype == SEARCHTYPE_FORWARD ||
-	      currentneedle->searchtype == SEARCHTYPE_FORWARD_NEXT) {
-	// footer defined: use FORWARD or FORWARD_NEXT semantics.
-	// Stop at first occurrence of footer, but for FORWARD,
-	// include the header in the carved file; for FORWARD_NEXT,
-	// don't include footer in carved file.  For FORWARD_NEXT, if
-	// no footer is found, then the maximum carve size for this
-	// file type will be used and carving will proceed.  For
-	// FORWARD, if no footer is found then no carving will be
-	// performed unless -b was specified on the command line.
+            // case 1: no footer defined for this file type
+            if(!currentneedle->endlength) {
 
-	halt = 0;
+                // this is the unfortunate case--if file type doesn't have a footer,
+                // all we can done is carve a block between header position and
+                // maximum carve size.
+                stop = start + currentneedle->length - 1;
+                // these are always considered chopped, because we don't really
+                // know the actual size
+                chopped = 1;
+            }
+            else if(currentneedle->searchtype == SEARCHTYPE_FORWARD ||
+                currentneedle->searchtype == SEARCHTYPE_FORWARD_NEXT) {
+                    // footer defined: use FORWARD or FORWARD_NEXT semantics.
+                    // Stop at first occurrence of footer, but for FORWARD,
+                    // include the header in the carved file; for FORWARD_NEXT,
+                    // don't include footer in carved file.  For FORWARD_NEXT, if
+                    // no footer is found, then the maximum carve size for this
+                    // file type will be used and carving will proceed.  For
+                    // FORWARD, if no footer is found then no carving will be
+                    // performed unless -b was specified on the command line.
 
-	if (state->handleEmbedded && 
-	    (currentneedle->searchtype == SEARCHTYPE_FORWARD ||
-	     currentneedle->searchtype == SEARCHTYPE_FORWARD_NEXT)) {
-	  firstcandidatefooter=adjustForEmbedding(currentneedle, i, &prevstopindex);
-	}
-	else {
-	  firstcandidatefooter=prevstopindex;
-	}
+                    halt = 0;
 
-	for (j=firstcandidatefooter;
-	     j < (long long)currentneedle->offsets.numfooters && ! halt; j++) {
+                    if (state->handleEmbedded && 
+                        (currentneedle->searchtype == SEARCHTYPE_FORWARD ||
+                        currentneedle->searchtype == SEARCHTYPE_FORWARD_NEXT)) {
+                            firstcandidatefooter=adjustForEmbedding(currentneedle, i, &prevstopindex);
+                    }
+                    else {
+                        firstcandidatefooter=prevstopindex;
+                    }
 
-	  if((long long)currentneedle->offsets.footers[j] <= start) {
-	    if (! state->handleEmbedded) {
-	      prevstopindex=j;
-	    }
+                    for (j=firstcandidatefooter;
+                        j < (long long)currentneedle->offsets.numfooters && ! halt; j++) {
 
-	  }
-	  else {
-	    halt = 1;
-	    stop = currentneedle->offsets.footers[j];
+                            if((long long)currentneedle->offsets.footers[j] <= start) {
+                                if (! state->handleEmbedded) {
+                                    prevstopindex=j;
+                                }
 
-	    if(currentneedle->searchtype == SEARCHTYPE_FORWARD) {
-	      // include footer in carved file
-	      stop += currentneedle->endlength - 1;
-	      // 	BUG? this or above?		    stop += currentneedle->offsets.footerlens[j] - 1;
-	    }
-	    else {
-	      // FORWARD_NEXT--don't include footer in carved file
-	      stop--;
-	    }
-	    // sanity check on size of potential file to carve--different
-	    // actions depending on FORWARD or FORWARD_NEXT semantics
-	    if(stop - start + 1 > (long long)currentneedle->length) {
-	      if(currentneedle->searchtype == SEARCHTYPE_FORWARD) {
-		// if the user specified -b, then foremost 0.69
-		// compatibility is desired: carve this file even 
-		// though the footer wasn't found and indicate
-		// the file was chopped, in the log.  Otherwise, 
-		// carve nothing and move on.
-		if(state->carveWithMissingFooters) {
-		  stop = start + currentneedle->length - 1;
-		  chopped = 1;
-		}
-		else {
-		  stop = 0;
-		}
-	      }
-	      else {
-		// footer found for FORWARD_NEXT, but distance exceeds
-		// max carve size for this file type, so use max carve
-		// size as stop
-		stop = start + currentneedle->length - 1;
-		chopped = 1;
-	      }
-	    }
-	  }
-	}
-	if(!halt &&
-	   (currentneedle->searchtype == SEARCHTYPE_FORWARD_NEXT ||
-	    (currentneedle->searchtype == SEARCHTYPE_FORWARD &&
-	     state->carveWithMissingFooters))) {
-	  // no footer found for SEARCHTYPE_FORWARD_NEXT, or no footer
-	  // found for SEARCHTYPE_FORWARD and user specified -b, so just use
-	  // max carve size for this file type as stop
-	  stop = start + currentneedle->length - 1;
-	}
-      }
-      else {
-	// footer defined: use REVERSE semantics: want matching footer
-	// as far away from header as possible, within maximum carving
-	// size for this file type.  Don't bother to look at footers
-	// that can't possibly match a header and remember this info
-	// in prevstopindex, as the next headers will be even deeper
-	// into the image file.  Footer is included in carved file for
-	// this type of carve.
-	halt = 0;
-	for(j = prevstopindex; j < (long long)currentneedle->offsets.numfooters &&
-	      !halt; j++) {
-	  if((long long)currentneedle->offsets.footers[j] <= start) {
-	    prevstopindex = j;
-	  }
-	  else if(currentneedle->offsets.footers[j] - start <=
-		  currentneedle->length) {
-	    stop = currentneedle->offsets.footers[j]
-	      + currentneedle->endlength - 1;
-	  }
-	  else {
-	    halt = 1;
-	  }
-	}
-      }
+                            }
+                            else {
+                                halt = 1;
+                                stop = currentneedle->offsets.footers[j];
 
-      // if stop <> 0, then we have enough information to set up a
-      // file carving operation.  It must pass the minimum carve size
-      // test, if currentneedle->minLength != 0.
-      //     if(stop) {
-      if (stop && (stop - start + 1) >= (long long)currentneedle->minlength) {
+                                if(currentneedle->searchtype == SEARCHTYPE_FORWARD) {
+                                    // include footer in carved file
+                                    stop += currentneedle->endlength - 1;
+                                    // 	BUG? this or above?		    stop += currentneedle->offsets.footerlens[j] - 1;
+                                }
+                                else {
+                                    // FORWARD_NEXT--don't include footer in carved file
+                                    stop--;
+                                }
+                                // sanity check on size of potential file to carve--different
+                                // actions depending on FORWARD or FORWARD_NEXT semantics
+                                if(stop - start + 1 > (long long)currentneedle->length) {
+                                    if(currentneedle->searchtype == SEARCHTYPE_FORWARD) {
+                                        // if the user specified -b, then foremost 0.69
+                                        // compatibility is desired: carve this file even 
+                                        // though the footer wasn't found and indicate
+                                        // the file was chopped, in the log.  Otherwise, 
+                                        // carve nothing and move on.
+                                        if(state->carveWithMissingFooters) {
+                                            stop = start + currentneedle->length - 1;
+                                            chopped = 1;
+                                        }
+                                        else {
+                                            stop = 0;
+                                        }
+                                    }
+                                    else {
+                                        // footer found for FORWARD_NEXT, but distance exceeds
+                                        // max carve size for this file type, so use max carve
+                                        // size as stop
+                                        stop = start + currentneedle->length - 1;
+                                        chopped = 1;
+                                    }
+                                }
+                            }
+                    }
+                    if(!halt &&
+                        (currentneedle->searchtype == SEARCHTYPE_FORWARD_NEXT ||
+                        (currentneedle->searchtype == SEARCHTYPE_FORWARD &&
+                        state->carveWithMissingFooters))) {
+                            // no footer found for SEARCHTYPE_FORWARD_NEXT, or no footer
+                            // found for SEARCHTYPE_FORWARD and user specified -b, so just use
+                            // max carve size for this file type as stop
+                            stop = start + currentneedle->length - 1;
+                    }
+            }
+            else {
+                // footer defined: use REVERSE semantics: want matching footer
+                // as far away from header as possible, within maximum carving
+                // size for this file type.  Don't bother to look at footers
+                // that can't possibly match a header and remember this info
+                // in prevstopindex, as the next headers will be even deeper
+                // into the image file.  Footer is included in carved file for
+                // this type of carve.
+                halt = 0;
+                for(j = prevstopindex; j < (long long)currentneedle->offsets.numfooters &&
+                    !halt; j++) {
+                        if((long long)currentneedle->offsets.footers[j] <= start) {
+                            prevstopindex = j;
+                        }
+                        else if(currentneedle->offsets.footers[j] - start <=
+                            currentneedle->length) {
+                                stop = currentneedle->offsets.footers[j]
+                                + currentneedle->endlength - 1;
+                        }
+                        else {
+                            halt = 1;
+                        }
+                }
+            }
 
-	// don't carve past end of image file...
-	stop = stop > filesize ? filesize - 1 : stop;
+            // if stop <> 0, then we have enough information to set up a
+            // file carving operation.  It must pass the minimum carve size
+            // test, if currentneedle->minLength != 0.
+            //     if(stop) {
+            if (stop && (stop - start + 1) >= (long long)currentneedle->minlength) {
 
-	// find indices (in SIZE_OF_BUFFER units) of header and
-	// footer, so the carveinfo can be placed into the right
-	// queues.  The priority of each element in a queue allows the
-	// appropriate thing to be done (e.g., STARTSTOPCARVE,
-	// STARTCARVE, STOPCARVE, CONTINUECARVE).
+                // don't carve past end of image file...
+                stop = stop > filesize ? filesize - 1 : stop;
 
-	headerblockindex = start / SIZE_OF_BUFFER;
-	footerblockindex = stop / SIZE_OF_BUFFER;
+                // find indices (in SIZE_OF_BUFFER units) of header and
+                // footer, so the carveinfo can be placed into the right
+                // queues.  The priority of each element in a queue allows the
+                // appropriate thing to be done (e.g., STARTSTOPCARVE,
+                // STARTCARVE, STOPCARVE, CONTINUECARVE).
 
-	// set up a struct CarveInfo for inclusion into the
-	// appropriate carvelists
+                headerblockindex = start / SIZE_OF_BUFFER;
+                footerblockindex = stop / SIZE_OF_BUFFER;
 
-	// generate unique filename for file to carve
+                // set up a struct CarveInfo for inclusion into the
+                // appropriate carvelists
 
-	if(state->organizeSubdirectories) {
-	  snprintf(orgdir, MAX_STRING_LENGTH, "%s/%s-%d-%1lu",
-		   state->outputdirectory,
-		   currentneedle->suffix,
-		   needlenum, currentneedle->organizeDirNum);
-	  if(!state->previewMode) {
+                // generate unique filename for file to carve
+
+                if(state->organizeSubdirectories) {
+                    snprintf(orgdir, MAX_STRING_LENGTH, "%s/%s-%d-%1lu",
+                        state->outputdirectory,
+                        currentneedle->suffix,
+                        needlenum, currentneedle->organizeDirNum);
+                    if(!state->previewMode) {
 #ifdef _WIN32
-	    mkdir(orgdir);
+                        mkdir(orgdir);
 #else
-	    mkdir(orgdir, 0777);
+                        mkdir(orgdir, 0777);
 #endif
-	  }
-	}
-	else {
-	  snprintf(orgdir, MAX_STRING_LENGTH, "%s", state->outputdirectory);
-	}
+                    }
+                }
+                else {
+                    snprintf(orgdir, MAX_STRING_LENGTH, "%s", state->outputdirectory);
+                }
 
-	if(state->modeNoSuffix || currentneedle->suffix[0] ==
-	   SCALPEL_NOEXTENSION) {
+                if(state->modeNoSuffix || currentneedle->suffix[0] ==
+                    SCALPEL_NOEXTENSION) {
 #ifdef _WIN32
-	  snprintf(fn, MAX_STRING_LENGTH, "%s/%08I64u",
-		   orgdir, state->fileswritten);
+                        snprintf(fn, MAX_STRING_LENGTH, "%s/%08I64u",
+                            orgdir, state->fileswritten);
 #else
-	  snprintf(fn, MAX_STRING_LENGTH, "%s/%08llu",
-		   orgdir, state->fileswritten);
+                        snprintf(fn, MAX_STRING_LENGTH, "%s/%08llu",
+                            orgdir, state->fileswritten);
 #endif
 
-	}
-	else {
+                }
+                else {
 #ifdef _WIN32
-	  snprintf(fn, MAX_STRING_LENGTH, "%s/%08I64u.%s",
-		   orgdir, state->fileswritten, currentneedle->suffix);
+                    snprintf(fn, MAX_STRING_LENGTH, "%s/%08I64u.%s",
+                        orgdir, state->fileswritten, currentneedle->suffix);
 #else
-	  snprintf(fn, MAX_STRING_LENGTH, "%s/%08llu.%s",
-		   orgdir, state->fileswritten, currentneedle->suffix);
+                    snprintf(fn, MAX_STRING_LENGTH, "%s/%08llu.%s",
+                        orgdir, state->fileswritten, currentneedle->suffix);
 #endif
-	}
-	state->fileswritten++;
-	currentneedle->numfilestocarve++;
-	if(currentneedle->numfilestocarve % state->organizeMaxFilesPerSub == 0) {
-	  currentneedle->organizeDirNum++;
-	}
+                }
+                state->fileswritten++;
+                currentneedle->numfilestocarve++;
+                if(currentneedle->numfilestocarve % state->organizeMaxFilesPerSub == 0) {
+                    currentneedle->organizeDirNum++;
+                }
 
-	carveinfo = (struct CarveInfo *)malloc(sizeof(struct CarveInfo));
-	checkMemoryAllocation(state, carveinfo, __LINE__, __FILE__,
-			      "carveinfo");
+                carveinfo = (struct CarveInfo *)malloc(sizeof(struct CarveInfo));
+                checkMemoryAllocation(state, carveinfo, __LINE__, __FILE__,
+                    "carveinfo");
 
-	// remember filename
-	carveinfo->filename = (char *)malloc(strlen(fn) + 1);
-	checkMemoryAllocation(state, carveinfo->filename, __LINE__,
-			      __FILE__, "carveinfo");
-	strcpy(carveinfo->filename, fn);
-	carveinfo->start = start;
-	carveinfo->stop = stop;
-	carveinfo->chopped = chopped;
+                // remember filename
+                carveinfo->filename = (char *)malloc(strlen(fn) + 1);
+                checkMemoryAllocation(state, carveinfo->filename, __LINE__,
+                    __FILE__, "carveinfo");
+                strcpy(carveinfo->filename, fn);
+                carveinfo->start = start;
+                carveinfo->stop = stop;
+                carveinfo->chopped = chopped;
 
-	// fp will be allocated when the first byte of the file is
-	// in the current buffer and cleaned up when we encounter the
-	// last byte of the file.
-	carveinfo->fp = 0;
+                // fp will be allocated when the first byte of the file is
+                // in the current buffer and cleaned up when we encounter the
+                // last byte of the file.
+                carveinfo->fp = 0;
 
-	if(headerblockindex == footerblockindex) {
-	  // header and footer will both appear in the same buffer
-	  add_to_queue(&carvelists[headerblockindex],
-		       &carveinfo, STARTSTOPCARVE);
-	}
-	else {
-	  // header/footer will appear in different buffers, add carveinfo to 
-	  // stop and start lists...
-	  add_to_queue(&carvelists[headerblockindex], &carveinfo, STARTCARVE);
-	  add_to_queue(&carvelists[footerblockindex], &carveinfo, STOPCARVE);
-	  // .. and to all lists in between (these will result in a full
-	  // SIZE_OF_BUFFER bytes being carved into the file).  
-	  for(j = (long long)headerblockindex + 1; j < (long long)footerblockindex; j++) {
-	    add_to_queue(&carvelists[j], &carveinfo, CONTINUECARVE);
-	  }
-	}
-      }
-    }
-  }
-
-  fprintf(stdout, "Work queues built.  Workload:\n");
-  for(needlenum = 0; needlenum < state->specLines; needlenum++) {
-    currentneedle = &(state->SearchSpec[needlenum]);
-    fprintf(stdout, "%s with header \"", currentneedle->suffix);
-    fprintf(stdout, "%s", currentneedle->begintext);
-    fprintf(stdout, "\" and footer \"");
-    if(currentneedle->end == 0) {
-      fprintf(stdout, "NONE");
-    }
-    else {
-      fprintf(stdout, "%s", currentneedle->endtext);
+                if(headerblockindex == footerblockindex) {
+                    // header and footer will both appear in the same buffer
+                    fprintf(stdout, "Adding %s to queue\n", carveinfo->filename);
+                    add_to_queue(&carvelists[headerblockindex],
+                        &carveinfo, STARTSTOPCARVE);
+                }
+                else {
+                    // header/footer will appear in different buffers, add carveinfo to 
+                    // stop and start lists...
+                    fprintf(stdout, "Adding %s to queue\n", carveinfo->filename);
+                    add_to_queue(&carvelists[headerblockindex], &carveinfo, STARTCARVE);
+                    add_to_queue(&carvelists[footerblockindex], &carveinfo, STOPCARVE);
+                    // .. and to all lists in between (these will result in a full
+                    // SIZE_OF_BUFFER bytes being carved into the file).  
+                    for(j = (long long)headerblockindex + 1; j < (long long)footerblockindex; j++) {
+                        add_to_queue(&carvelists[j], &carveinfo, CONTINUECARVE);
+                    }
+                }
+            }
+        }
     }
 
-    fprintf(stdout, "\" --> %"PRIu64 " files\n", currentneedle->numfilestocarve);
+    fprintf(stdout, "Work queues built.  Workload:\n");
+    for(needlenum = 0; needlenum < state->specLines; needlenum++) {
+        currentneedle = &(state->SearchSpec[needlenum]);
+        fprintf(stdout, "%s with header \"", currentneedle->suffix);
+        fprintf(stdout, "%s", currentneedle->begintext);
+        fprintf(stdout, "\" and footer \"");
+        if(currentneedle->end == 0) {
+            fprintf(stdout, "NONE");
+        }
+        else {
+            fprintf(stdout, "%s", currentneedle->endtext);
+        }
 
+        fprintf(stdout, "\" --> %"PRIu64 " files\n", currentneedle->numfilestocarve);
 
-  }
-
-  if(state->previewMode) {
-    fprintf(stdout, "** PREVIEW MODE: GENERATING AUDIT LOG ONLY **\n");
-    fprintf(stdout, "** NO CARVED FILES WILL BE WRITTEN **\n");
-  }
-
-  fprintf(stdout, "Carving files from image.\n");
-  fprintf(stdout, "Image file pass 2/2.\n");
-
-  // now read image file in SIZE_OF_BUFFER-sized windows, writing
-  // carved files to output directory
-
-  success = 1;
-  while (success) {
-
-    unsigned long long biglseek = 0L;
-    // goal: skip reading buffers for which there is no work to do by using one big
-    // seek
-    fileposition = ftello_use_coverage_map(state, state->inReader);
-
-    while (queue_length(&carvelists[fileposition / SIZE_OF_BUFFER]) == 0
-	   && success) {
-      biglseek += SIZE_OF_BUFFER;
-      fileposition += SIZE_OF_BUFFER;
-      success = fileposition <= filesize;
 
     }
 
-    if(success && biglseek) {
-      fseeko_use_coverage_map(state, state->inReader, biglseek);
+    if(state->previewMode) {
+        fprintf(stdout, "** PREVIEW MODE: GENERATING AUDIT LOG ONLY **\n");
+        fprintf(stdout, "** NO CARVED FILES WILL BE WRITTEN **\n");
     }
 
-    if(!success) {
-      // not an error--just means we've exhausted the image file--show
-      // progress report then quit carving
-      displayPosition(&displayUnits, filesize, filesize, scalpelInputGetId(state->inReader) );
+    fprintf(stdout, "Carving files from image.\n");
+    fprintf(stdout, "Image file pass 2/2.\n");
 
-      continue;
-    }
-
-    if(!state->previewMode) {
-      bytesread =
-	fread_use_coverage_map(state, readbuffer, 1, SIZE_OF_BUFFER, state->inReader);
-      // Check for read errors
-      if((err = scalpelInputGetError(state->inReader))) {
-	return SCALPEL_ERROR_FILE_READ;
-      }
-      else if(bytesread == 0) {
-	// no error, but image file exhausted
-	success = 0;
-	continue;
-      }
-    }
-    else {
-      // in preview mode, seeks are used in the 2nd pass instead of
-      // reads.  This isn't optimal, but it's fast enough and avoids
-      // complicating the file carving code further.
-
-      fileposition = ftello_use_coverage_map(state, state->inReader);
-      fseeko_use_coverage_map(state, state->inReader, SIZE_OF_BUFFER);
-      bytesread = ftello_use_coverage_map(state, state->inReader) - fileposition;
-
-      // Check for errors
-      if((err = scalpelInputGetError(state->inReader))) {
-	return SCALPEL_ERROR_FILE_READ;
-      }
-      else if(bytesread == 0) {
-	// no error, but image file exhausted
-	success = 0;
-	continue;
-      }
-    }
+    // now read image file in SIZE_OF_BUFFER-sized windows, writing
+    // carved files to output directory
 
     success = 1;
+    while (success) {
 
-    // progress report needs real file position
-    fileposition = scalpelInputTello(state->inReader);
-    displayPosition(&displayUnits, fileposition - filebegin,
-		    filesize, scalpelInputGetId(state->inReader));
+        unsigned long long biglseek = 0L;
+        // goal: skip reading buffers for which there is no work to do by using one big
+        // seek
+        fileposition = ftello_use_coverage_map(state, state->inReader);
 
-    // if using coverage map for carving, need adjusted file position
-    fileposition = ftello_use_coverage_map(state, state->inReader);
+        while (queue_length(&carvelists[fileposition / SIZE_OF_BUFFER]) == 0
+            && success) {
+                biglseek += SIZE_OF_BUFFER;
+                fileposition += SIZE_OF_BUFFER;
+                success = fileposition <= filesize;
 
-    // signal check
-    if(signal_caught == SIGTERM || signal_caught == SIGINT) {
-      clean_up(state, signal_caught);
+        }
+
+        if(success && biglseek) {
+            fseeko_use_coverage_map(state, state->inReader, biglseek);
+        }
+
+        if(!success) {
+            // not an error--just means we've exhausted the image file--show
+            // progress report then quit carving
+            displayPosition(&displayUnits, filesize, filesize, scalpelInputGetId(state->inReader) );
+
+            continue;
+        }
+
+        if(!state->previewMode) {
+            bytesread =
+                fread_use_coverage_map(state, readbuffer, 1, SIZE_OF_BUFFER, state->inReader);
+            // Check for read errors
+            if((err = scalpelInputGetError(state->inReader))) {
+                return SCALPEL_ERROR_FILE_READ;
+            }
+            else if(bytesread == 0) {
+                // no error, but image file exhausted
+                success = 0;
+                continue;
+            }
+        }
+        else {
+            // in preview mode, seeks are used in the 2nd pass instead of
+            // reads.  This isn't optimal, but it's fast enough and avoids
+            // complicating the file carving code further.
+
+            fileposition = ftello_use_coverage_map(state, state->inReader);
+            fseeko_use_coverage_map(state, state->inReader, SIZE_OF_BUFFER);
+            bytesread = ftello_use_coverage_map(state, state->inReader) - fileposition;
+
+            // Check for errors
+            if((err = scalpelInputGetError(state->inReader))) {
+                return SCALPEL_ERROR_FILE_READ;
+            }
+            else if(bytesread == 0) {
+                // no error, but image file exhausted
+                success = 0;
+                continue;
+            }
+        }
+
+        success = 1;
+
+        // progress report needs real file position
+        fileposition = scalpelInputTello(state->inReader);
+        displayPosition(&displayUnits, fileposition - filebegin,
+            filesize, scalpelInputGetId(state->inReader));
+
+        // if using coverage map for carving, need adjusted file position
+        fileposition = ftello_use_coverage_map(state, state->inReader);
+
+        // signal check
+        if(signal_caught == SIGTERM || signal_caught == SIGINT) {
+            clean_up(state, signal_caught);
+        }
+
+        // deal with work for this SIZE_OF_BUFFER-sized block by
+        // examining the associated queue
+        rewind_queue(&carvelists[(fileposition - bytesread) / SIZE_OF_BUFFER]);
+
+        while (!end_of_queue
+            (&carvelists[(fileposition - bytesread) / SIZE_OF_BUFFER])) {
+                struct CarveInfo *carve;
+                int operation;
+                unsigned long long bytestowrite = 0, byteswritten = 0, offset = 0;
+
+                peek_at_current(&carvelists
+                    [(fileposition - bytesread) / SIZE_OF_BUFFER], &carve);
+                operation =
+                    current_priority(&carvelists
+                    [(fileposition - bytesread) / SIZE_OF_BUFFER]);
+
+                // open file, if beginning of carve operation or file had to be closed
+                // previously due to resource limitations
+                if(operation == STARTSTOPCARVE ||
+                    operation == STARTCARVE || carve->fp == 0) {
+
+                        if(!state->previewMode && state->modeVerbose) {
+                            fprintf(stdout, "OPENING %s\n", carve->filename);
+                        }
+
+                        carve->fp = (FILE *) 1;
+                        if(!state->previewMode) {
+                            carve->fp = fopen(carve->filename, "ab");
+                        }
+
+                        if(!carve->fp) {
+                            fprintf(stderr, "Error opening file: %s -- %s\n",
+                                carve->filename, strerror(errno));
+                            fprintf(state->auditFile, "Error opening file: %s -- %s\n",
+                                carve->filename, strerror(errno));
+                            return SCALPEL_ERROR_FILE_WRITE;
+                        }
+                        else {
+                            CURRENTFILESOPEN++;
+                        }
+                }
+
+                // write some portion of current readbuffer
+                switch (operation) {
+                case CONTINUECARVE:
+                    offset = 0;
+                    bytestowrite = SIZE_OF_BUFFER;
+                    break;
+                case STARTSTOPCARVE:
+                    offset = carve->start - (fileposition - bytesread);
+                    bytestowrite = carve->stop - carve->start + 1;
+                    break;
+                case STARTCARVE:
+                    offset = carve->start - (fileposition - bytesread);
+                    bytestowrite = (carve->stop - carve->start + 1) >
+                        (SIZE_OF_BUFFER - offset) ? (SIZE_OF_BUFFER - offset) :
+                        (carve->stop - carve->start + 1);
+                    break;
+                case STOPCARVE:
+                    offset = 0;
+                    bytestowrite = carve->stop - (fileposition - bytesread) + 1;
+                    break;
+                }
+
+                if(!state->previewMode) {
+                    //	struct timeval writenow, writethen;
+                    //	gettimeofday(&writethen, 0);
+                    if((byteswritten = fwrite(readbuffer + offset,
+                        sizeof(char),
+                        bytestowrite, carve->fp)) != bytestowrite) {
+
+                            fprintf(stderr, "Error writing to file: %s -- %s\n",
+                                carve->filename, strerror(ferror(carve->fp)));
+                            fprintf(state->auditFile,
+                                "Error writing to file: %s -- %s\n",
+                                carve->filename, strerror(ferror(carve->fp)));
+                            return SCALPEL_ERROR_FILE_WRITE;
+                    }
+                }
+
+                // close file, if necessary.  Always do it on STARTSTOPCARVE and
+                // STOPCARVE, but also do it if we have a large number of files
+                // open, otherwise we'll run out of available file handles.  Updating the
+                // coverage blockmap and auditing is done here, when a file being carved
+                // is closed for the last time.
+                if(operation == STARTSTOPCARVE ||
+                    operation == STOPCARVE || CURRENTFILESOPEN > MAX_FILES_TO_OPEN) {
+                        err = 0;
+                        if(!state->previewMode) {
+                            if(state->modeVerbose) {
+                                fprintf(stdout, "CLOSING %s\n", carve->filename);
+                            }
+                            err = fclose(carve->fp);
+                        }
+
+                        if(err) {
+                            fprintf(stderr, "Error closing file: %s -- %s\n\n",
+                                carve->filename, strerror(ferror(carve->fp)));
+                            fprintf(state->auditFile,
+                                "Error closing file: %s -- %s\n\n",
+                                carve->filename, strerror(ferror(carve->fp)));
+                            return SCALPEL_ERROR_FILE_WRITE;
+                        }
+                        else {
+                            CURRENTFILESOPEN--;
+                            carve->fp = 0;
+
+                            // release filename buffer if it won't be needed again.  Don't release it
+                            // if the file was closed only because a large number of files are currently
+                            // open!
+                            if(operation == STARTSTOPCARVE || operation == STOPCARVE) {
+                                auditUpdateCoverageBlockmap(state, carve);
+                                free(carve->filename);
+                                carve->filename = NULL;
+                            }
+                            // free(carve);
+                        }
+                }
+                next_element(&carvelists[(fileposition - bytesread) / SIZE_OF_BUFFER]);
+        }
     }
 
-    // deal with work for this SIZE_OF_BUFFER-sized block by
-    // examining the associated queue
-    rewind_queue(&carvelists[(fileposition - bytesread) / SIZE_OF_BUFFER]);
+    //  closeFile(infile);
+    scalpelInputClose(state->inReader);
 
-    while (!end_of_queue
-	   (&carvelists[(fileposition - bytesread) / SIZE_OF_BUFFER])) {
-      struct CarveInfo *carve;
-      int operation;
-      unsigned long long bytestowrite = 0, byteswritten = 0, offset = 0;
+    // write header/footer database, if necessary, before 
+    // cleanup for current image file.  
 
-      peek_at_current(&carvelists
-		      [(fileposition - bytesread) / SIZE_OF_BUFFER], &carve);
-      operation =
-	current_priority(&carvelists
-			 [(fileposition - bytesread) / SIZE_OF_BUFFER]);
-
-      // open file, if beginning of carve operation or file had to be closed
-      // previously due to resource limitations
-      if(operation == STARTSTOPCARVE ||
-	 operation == STARTCARVE || carve->fp == 0) {
-
-	if(!state->previewMode && state->modeVerbose) {
-	  fprintf(stdout, "OPENING %s\n", carve->filename);
-	}
-
-	carve->fp = (FILE *) 1;
-	if(!state->previewMode) {
-	  carve->fp = fopen(carve->filename, "ab");
-	}
-
-	if(!carve->fp) {
-	  fprintf(stderr, "Error opening file: %s -- %s\n",
-		  carve->filename, strerror(errno));
-	  fprintf(state->auditFile, "Error opening file: %s -- %s\n",
-		  carve->filename, strerror(errno));
-	  return SCALPEL_ERROR_FILE_WRITE;
-	}
-	else {
-	  CURRENTFILESOPEN++;
-	}
-      }
-
-      // write some portion of current readbuffer
-      switch (operation) {
-      case CONTINUECARVE:
-	offset = 0;
-	bytestowrite = SIZE_OF_BUFFER;
-	break;
-      case STARTSTOPCARVE:
-	offset = carve->start - (fileposition - bytesread);
-	bytestowrite = carve->stop - carve->start + 1;
-	break;
-      case STARTCARVE:
-	offset = carve->start - (fileposition - bytesread);
-	bytestowrite = (carve->stop - carve->start + 1) >
-	  (SIZE_OF_BUFFER - offset) ? (SIZE_OF_BUFFER - offset) :
-	  (carve->stop - carve->start + 1);
-	break;
-      case STOPCARVE:
-	offset = 0;
-	bytestowrite = carve->stop - (fileposition - bytesread) + 1;
-	break;
-      }
-
-      if(!state->previewMode) {
-//	struct timeval writenow, writethen;
-//	gettimeofday(&writethen, 0);
-	if((byteswritten = fwrite(readbuffer + offset,
-				  sizeof(char),
-				  bytestowrite, carve->fp)) != bytestowrite) {
-
-	  fprintf(stderr, "Error writing to file: %s -- %s\n",
-		  carve->filename, strerror(ferror(carve->fp)));
-	  fprintf(state->auditFile,
-		  "Error writing to file: %s -- %s\n",
-		  carve->filename, strerror(ferror(carve->fp)));
-	  return SCALPEL_ERROR_FILE_WRITE;
-	}
-      }
-
-      // close file, if necessary.  Always do it on STARTSTOPCARVE and
-      // STOPCARVE, but also do it if we have a large number of files
-      // open, otherwise we'll run out of available file handles.  Updating the
-      // coverage blockmap and auditing is done here, when a file being carved
-      // is closed for the last time.
-      if(operation == STARTSTOPCARVE ||
-	 operation == STOPCARVE || CURRENTFILESOPEN > MAX_FILES_TO_OPEN) {
-	err = 0;
-	if(!state->previewMode) {
-	  if(state->modeVerbose) {
-	    fprintf(stdout, "CLOSING %s\n", carve->filename);
-	  }
-	  err = fclose(carve->fp);
-	}
-
-	if(err) {
-	  fprintf(stderr, "Error closing file: %s -- %s\n\n",
-		  carve->filename, strerror(ferror(carve->fp)));
-	  fprintf(state->auditFile,
-		  "Error closing file: %s -- %s\n\n",
-		  carve->filename, strerror(ferror(carve->fp)));
-	  return SCALPEL_ERROR_FILE_WRITE;
-	}
-	else {
-	  CURRENTFILESOPEN--;
-	  carve->fp = 0;
-
-	  // release filename buffer if it won't be needed again.  Don't release it
-	  // if the file was closed only because a large number of files are currently
-	  // open!
-	  if(operation == STARTSTOPCARVE || operation == STOPCARVE) {
-	    auditUpdateCoverageBlockmap(state, carve);
-	    free(carve->filename);
-	    carve->filename = NULL;
-	  }
-      free(carve);
-	}
-      }
-      next_element(&carvelists[(fileposition - bytesread) / SIZE_OF_BUFFER]);
+    if(state->generateHeaderFooterDatabase) {
+        if((err = writeHeaderFooterDatabase(state)) != SCALPEL_OK) {
+            return err;
+        }
     }
-  }
 
-  //  closeFile(infile);
-  scalpelInputClose(state->inReader);
+    // tear down coverage maps, if necessary
+    destroyCoverageMaps(state);
 
-  // write header/footer database, if necessary, before 
-  // cleanup for current image file.  
+    printf("Processing of image file complete. Cleaning up...\n");
 
-  if(state->generateHeaderFooterDatabase) {
-    if((err = writeHeaderFooterDatabase(state)) != SCALPEL_OK) {
-      return err;
+    // tear down header/footer databases
+
+    for(needlenum = 0; needlenum < state->specLines; needlenum++) {
+        currentneedle = &(state->SearchSpec[needlenum]);
+        if(currentneedle->offsets.headers) {
+            free(currentneedle->offsets.headers);
+            currentneedle->offsets.headers = NULL;
+        }
+        if(currentneedle->offsets.footers) {
+            free(currentneedle->offsets.footers);
+            currentneedle->offsets.footers = NULL;
+        }
+        currentneedle->offsets.headers = 0;
+        currentneedle->offsets.footers = 0;
+        currentneedle->offsets.numheaders = 0;
+        currentneedle->offsets.numfooters = 0;
+        currentneedle->offsets.headerstorage = 0;
+        currentneedle->offsets.footerstorage = 0;
+        currentneedle->numfilestocarve = 0;
     }
-  }
 
-  // tear down coverage maps, if necessary
-  destroyCoverageMaps(state);
+    // tear down work queues--no memory deallocation for each queue
+    // entry required, because memory associated with fp and the
+    // filename was freed after the carved file was closed.
 
-  printf("Processing of image file complete. Cleaning up...\n");
-
-  // tear down header/footer databases
-
-  for(needlenum = 0; needlenum < state->specLines; needlenum++) {
-    currentneedle = &(state->SearchSpec[needlenum]);
-    if(currentneedle->offsets.headers) {
-      free(currentneedle->offsets.headers);
-      currentneedle->offsets.headers = NULL;
+    // destroy queues    
+    for(i = 0; i < 2 + (filesize / SIZE_OF_BUFFER); i++) {
+        rewind_queue(&carvelists[i]);
+        
+        while (!end_of_queue(&carvelists[i]))
+        {
+            // We need to free the CarveInfo strutures allocated
+            // above. Since these structures may have been added
+            // to multiple elements in the queue we want to make 
+            // sure we only free them once. That's accomplished 
+            // by checking the operation (priority). 
+            // The structures will either have been added to a 
+            // single STARTSTOPCARVE element or to a STARTCARVE,
+            // STOPCARVE and 0 or more CONTINUECARVE elements.
+            // We ensure the structures are only freed once by
+            // calling free when we come across either a STARTCARVE
+            // or STARTSTOPCARVE element.
+            switch (current_priority(&carvelists[i]))
+            {
+                case STARTCARVE:
+                case STARTSTOPCARVE:
+                {
+                    struct CarveInfo *carve;
+            
+                    peek_at_current(&carvelists[i], &carve);
+                    free(carve);
+                }
+                default:
+                    next_element(&carvelists[i]);
+            }
+        }
+        
+        destroy_queue(&carvelists[i]);
     }
-    if(currentneedle->offsets.footers) {
-      free(currentneedle->offsets.footers);
-      currentneedle->offsets.footers = NULL;
-    }
-    currentneedle->offsets.headers = 0;
-    currentneedle->offsets.footers = 0;
-    currentneedle->offsets.numheaders = 0;
-    currentneedle->offsets.numfooters = 0;
-    currentneedle->offsets.headerstorage = 0;
-    currentneedle->offsets.footerstorage = 0;
-    currentneedle->numfilestocarve = 0;
-  }
+    // destroy array of queues
+    free(carvelists);
+    carvelists = NULL;
 
-  // tear down work queues--no memory deallocation for each queue
-  // entry required, because memory associated with fp and the
-  // filename was freed after the carved file was closed.
-
-  // destroy queues
-  for(i = 0; i < 2 + (filesize / SIZE_OF_BUFFER); i++) {
-    destroy_queue(&carvelists[i]);
-  }
-  // destroy array of queues
-  free(carvelists);
-  carvelists = NULL;
-
-  printf("Done.");
-  return SCALPEL_OK;
+    printf("Done.");
+    return SCALPEL_OK;
 }
 
 
