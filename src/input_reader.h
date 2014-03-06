@@ -42,27 +42,27 @@ extern int inputReaderVerbose;
 
 //seek relative offset
 typedef enum {
-	SCALPEL_SEEK_SET,
-	SCALPEL_SEEK_CUR,
-	SCALPEL_SEEK_END
+    SCALPEL_SEEK_SET,
+    SCALPEL_SEEK_CUR,
+    SCALPEL_SEEK_END
 } scalpel_SeekRel;
 
 //abstraction for the input source to scalpel
 typedef struct _ScalpelInputReader {
 
-	//unsigned char isDefault; //if using a default FILE implementation
-	void * dataSource;  //pointer to the underlying content object, such as FileDataSource for FILE *
-	unsigned char isOpen;
-	char * id;         //id of the underlying data source, such as file path
+    //unsigned char isDefault; //if using a default FILE implementation
+    void * dataSource;  //pointer to the underlying content object, such as FileDataSource for FILE *
+    unsigned char isOpen;
+    char * id;         //id of the underlying data source, such as file path
 
-	//abstract methods, pointer to these need be provided by concrete impl.
-	int (* open)(struct _ScalpelInputReader * const reader);
-	void (* close)(struct _ScalpelInputReader * const reader);
-	int (* getError) (struct _ScalpelInputReader * const reader);
-	long long (* getSize) (struct _ScalpelInputReader * const reader);
-	int (* seeko)(struct _ScalpelInputReader * const reader, long long offset, scalpel_SeekRel whence);
-	unsigned long long (* tello)(struct _ScalpelInputReader * const reader);
-	int (* read)(struct _ScalpelInputReader * const reader, void * buf, size_t size, size_t count);
+    //abstract methods, pointer to these need be provided by concrete impl.
+    int (* open)(struct _ScalpelInputReader * const reader);
+    void (* close)(struct _ScalpelInputReader * const reader);
+    int (* getError) (struct _ScalpelInputReader * const reader);
+    long long (* getSize) (struct _ScalpelInputReader * const reader);
+    int (* seeko)(struct _ScalpelInputReader * const reader, long long offset, scalpel_SeekRel whence);
+    unsigned long long (* tello)(struct _ScalpelInputReader * const reader);
+    int (* read)(struct _ScalpelInputReader * const reader, void * buf, size_t size, size_t count);
 } ScalpelInputReader;
 
 /********** generic IO methods *********/
@@ -85,7 +85,7 @@ const char scalpelInputIsOpen(ScalpelInputReader * const reader);
 /********************* FILE implementation of ScalpelInputReader **********************/
 
 typedef struct FileDataSource {
-	FILE * fileHandle;
+    FILE * fileHandle;
 } FileDataSource;
 
 

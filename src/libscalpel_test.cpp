@@ -24,29 +24,30 @@ Scalpel, in 2005.
 
 // Test driver for scalpel library API
 
-int main(int argc, char ** argv) {
-	if (argc < 4) {
-		printf("usage: libscalpel_test confFilePath outDirPath inputFilePath ...\n");
-		exit(-1);
-	}
+int main(int argc, char ** argv) 
+{
+    if (argc < 4) {
+        printf("usage: libscalpel_test confFilePath outDirPath inputFilePath ...\n");
+        exit(-1);
+    }
 
-	printf("Testing scalpel lib with args %s %s %s\n", argv[1], argv[2], argv[3]);
-    
+    printf("Testing scalpel lib with args %s %s %s\n", argv[1], argv[2], argv[3]);
+
     scalpelState * pScalpelState = NULL;
     scalpelState options;
-	options.generateHeaderFooterDatabase = FALSE;
-	options.handleEmbedded = FALSE;
-	options.organizeSubdirectories = TRUE;
-	options.previewMode = FALSE;
-	options.carveWithMissingFooters = FALSE;
-	options.noSearchOverlap = FALSE;
+    options.generateHeaderFooterDatabase = FALSE;
+    options.handleEmbedded = FALSE;
+    options.organizeSubdirectories = TRUE;
+    options.previewMode = FALSE;
+    options.carveWithMissingFooters = FALSE;
+    options.noSearchOverlap = FALSE;
 
     if (libscalpel_initialize(&pScalpelState, argv[1], argv[2], options) != SCALPEL_OK)
     {
         printf("libscalpel initialization failed.\n");
         exit(1);
     }
-    
+
     for (int i = 3; i < argc; ++i)
     {
         ScalpelInputReader * inputReader = scalpel_createInputReaderFile(argv[i]);
@@ -57,7 +58,7 @@ int main(int argc, char ** argv) {
 
         try {
             int scalpErr = libscalpel_carve_input(pScalpelState, inputReader);
-            
+
             printf("Done, libscalp result: %d\n", scalpErr);
         }
         catch (std::runtime_error & e) {
@@ -71,8 +72,6 @@ int main(int argc, char ** argv) {
     }
 
     libscalpel_finalize(&pScalpelState);
-    
-	return 0;
+
+    return 0;
 }
-
-

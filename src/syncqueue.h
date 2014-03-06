@@ -34,13 +34,13 @@ Scalpel, in 2005.
 
 typedef struct
 {
-  const char *qname;
-  void **buf;
-  unsigned long head, tail;
-  int full, empty;
-  pthread_mutex_t *mut;
-  pthread_cond_t *notFull, *notEmpty;
-  unsigned long size;
+    const char *qname;
+    void **buf;
+    unsigned long head, tail;
+    int full, empty;
+    pthread_mutex_t *mut;
+    pthread_cond_t *notFull, *notEmpty;
+    unsigned long size;
 } syncqueue_t;
 
 

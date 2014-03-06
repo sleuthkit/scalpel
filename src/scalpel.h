@@ -220,21 +220,21 @@ extern double totalwrites;	// # of seconds spent in pass # 2 for writing carved 
 // documented
 
 #define STARTCARVE      1	// carve operation for this CarveInfo struct
-				// starts in current buffer
+                            // starts in current buffer
 #define STOPCARVE       2	// carve operation stops in current buffer
 #define STARTSTOPCARVE  3	// carve operation both starts and stops in
-				// current buffer
+                            // current buffer
 #define CONTINUECARVE   4	// carve operation includes entire contents
-				// of current buffer
+                            // of current buffer
 
 typedef struct CarveInfo {
-  char *filename;		// output filename for file to carve
-  FILE *fp;			// file descriptor for file to carve
-  unsigned long long start;	// offset of first byte in file
-  unsigned long long stop;	// offset of last byte in file
-  char chopped;			// is carved file's length constrained
-  // by max file size for type? (i.e., could
-  // the file actually be longer?
+    char *filename;		    // output filename for file to carve
+    FILE *fp;			    // file descriptor for file to carve
+    unsigned long long start;	// offset of first byte in file
+    unsigned long long stop;	// offset of last byte in file
+    char chopped;			// is carved file's length constrained
+                            // by max file size for type? (i.e., could
+                            // the file actually be longer?
 } CarveInfo;
 
 
@@ -247,14 +247,14 @@ typedef struct CarveInfo {
 // ascending order.
 
 typedef struct SearchSpecOffsets {
-  unsigned long long *headers;	// positions of discovered headers
-  size_t *headerlens;		// lengths of discovered headers
-  unsigned long long headerstorage;	// space allocated for this many header offsets
-  unsigned long long numheaders;	// # stored header positions
-  unsigned long long *footers;	// positions of discovered footers
-  size_t *footerlens;		// lengths of discovered footers
-  unsigned long long footerstorage;	// space allocated for this many footer offsets
-  unsigned long long numfooters;	// # stored footer positions
+    unsigned long long *headers;	// positions of discovered headers
+    size_t *headerlens;		        // lengths of discovered headers
+    unsigned long long headerstorage;	// space allocated for this many header offsets
+    unsigned long long numheaders;	// # stored header positions
+    unsigned long long *footers;	// positions of discovered footers
+    size_t *footerlens;		        // lengths of discovered footers
+    unsigned long long footerstorage;	// space allocated for this many footer offsets
+    unsigned long long numfooters;	// # stored footer positions
 } SearchSpecOffsets;
 
 // max files to open at once during carving--modify if you get
@@ -272,25 +272,25 @@ typedef union SearchState {
 } SearchState;
 
 typedef struct SearchSpecLine {
-  char *suffix;
-  int casesensitive;
-  unsigned long long length;
-  unsigned long long minlength;
-  char *begin;          // translate()-d header
-  char *begintext;      // textual version of header for humans
-  int beginlength;
-  int beginisRE;
-  SearchState beginstate;
-  char *end;            // translate()-d footer
-  char *endtext;        // textual version of footer for humans
-  int endlength;
-  int endisRE;
-  SearchState endstate;
-  int searchtype;		// FORWARD, NEXT, REVERSE search type for footer
-  struct SearchSpecOffsets offsets;
-  unsigned long long numfilestocarve;	// # files to carve of this type
-  unsigned long organizeDirNum;	// subdirectory # for organization 
-  // of files of this type
+    char *suffix;
+    int casesensitive;
+    unsigned long long length;
+    unsigned long long minlength;
+    char *begin;          // translate()-d header
+    char *begintext;      // textual version of header for humans
+    int beginlength;
+    int beginisRE;
+    SearchState beginstate;
+    char *end;            // translate()-d footer
+    char *endtext;        // textual version of footer for humans
+    int endlength;
+    int endisRE;
+    SearchState endstate;
+    int searchtype;		// FORWARD, NEXT, REVERSE search type for footer
+    struct SearchSpecOffsets offsets;
+    unsigned long long numfilestocarve;	// # files to carve of this type
+    unsigned long organizeDirNum;	// subdirectory # for organization 
+                                    // of files of this type
 } SearchSpecLine;
 
 //prototype for external carving function
@@ -306,35 +306,35 @@ extern int scalpel_carveSingleInput(ScalpelInputReader * const reader,
 		) throw (std::runtime_error);
 
 typedef struct scalpelState {
-  ScalpelInputReader * inReader;
-  char *conffile;
-  char *outputdirectory;
-  int specLines;
-  struct SearchSpecLine *SearchSpec;
-  unsigned long long fileswritten;
-  int modeVerbose;
-  int modeNoSuffix;
-  FILE *auditFile;
-  char *invocation;
-  unsigned long long skip;
-  char *coveragefile;
-  unsigned int coverageblocksize;
-  FILE *coverageblockmap;
-  unsigned char *coveragebitmap;
-  unsigned long long coveragenumblocks;
-  int useInputFileList;
-  char *inputFileList;
-  int carveWithMissingFooters;
-  int noSearchOverlap;
-  int handleEmbedded;
-  int generateHeaderFooterDatabase;
-  int updateCoverageBlockmap;
-  int useCoverageBlockmap;
-  int organizeSubdirectories;
-  unsigned long long organizeMaxFilesPerSub;
-  int blockAlignedOnly;
-  unsigned int alignedblocksize;
-  int previewMode;
+    ScalpelInputReader * inReader;
+    char *conffile;
+    char *outputdirectory;
+    int specLines;
+    struct SearchSpecLine *SearchSpec;
+    unsigned long long fileswritten;
+    int modeVerbose;
+    int modeNoSuffix;
+    FILE *auditFile;
+    char *invocation;
+    unsigned long long skip;
+    char *coveragefile;
+    unsigned int coverageblocksize;
+    FILE *coverageblockmap;
+    unsigned char *coveragebitmap;
+    unsigned long long coveragenumblocks;
+    int useInputFileList;
+    char *inputFileList;
+    int carveWithMissingFooters;
+    int noSearchOverlap;
+    int handleEmbedded;
+    int generateHeaderFooterDatabase;
+    int updateCoverageBlockmap;
+    int useCoverageBlockmap;
+    int organizeSubdirectories;
+    unsigned long long organizeMaxFilesPerSub;
+    int blockAlignedOnly;
+    unsigned int alignedblocksize;
+    int previewMode;
 } scalpelState;
 
 
@@ -342,8 +342,8 @@ typedef struct scalpelState {
 // are real disk image addresses that define the fragment's
 // location.
 typedef struct Fragment {
-  unsigned long long start;
-  unsigned long long stop;
+    unsigned long long start;
+    unsigned long long stop;
 } Fragment;
 
 // Interface for using scalpel as a library

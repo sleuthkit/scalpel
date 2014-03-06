@@ -57,31 +57,31 @@ Scalpel, in 2005.
 
 typedef struct _Queue_element
 {
-  void *info;
-  int priority;
-  struct _Queue_element *next;
+    void *info;
+    int priority;
+    struct _Queue_element *next;
 } *Queue_element;
 
 /* basic queue type */
 
 typedef struct Queue
 {
-  Queue_element queue;		/* linked list of elements */
-  Queue_element current;	/* current position for sequential access functions */
-  Queue_element previous;	/* one step back from current */
-  int queuelength;		/* # of elements in queue */
-  int elementsize;		/* 'sizeof()' one element */
-  int duplicates;		/* are duplicates allowed? */
-  int (*compare) (void *e1, void *e2);	/* element comparision function */
-  pthread_mutex_t lock;
-  int priority_is_tag_only;
+    Queue_element queue;		/* linked list of elements */
+    Queue_element current;	/* current position for sequential access functions */
+    Queue_element previous;	/* one step back from current */
+    int queuelength;		/* # of elements in queue */
+    int elementsize;		/* 'sizeof()' one element */
+    int duplicates;		/* are duplicates allowed? */
+    int (*compare) (void *e1, void *e2);	/* element comparision function */
+    pthread_mutex_t lock;
+    int priority_is_tag_only;
 } Queue;
 
 typedef struct Context
 {
-  Queue_element current;	/* current position for local seq access functions */
-  Queue_element previous;	/* one step back from current */
-  Queue *queue;			/* queue associated with this context */
+    Queue_element current;	/* current position for local seq access functions */
+    Queue_element previous;	/* one step back from current */
+    Queue *queue;			/* queue associated with this context */
 } Context;
 
 
