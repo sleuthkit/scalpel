@@ -71,11 +71,15 @@ int the future.
 
 COMPILE INSTRUCTIONS ON SUPPORTED PLATFORMS:
 
-Linux/Mac OS X:    ./configure and then make
+Linux/Mac OS X:    
+% ./bootstrap
+% ./configure 
+% make
 
-Windows:           cd to src directory and then:
+Windows (mingw):
+cd src 
+mingw32-make -f Makefile.win
 
-	           mingw32-make -f Makefile.win
 
 and enjoy.  If you want to install the binary and man page in a more
 permanent place, just copy "scalpel" (or "scalpel.exe") and
