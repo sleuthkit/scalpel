@@ -452,7 +452,7 @@ void handleError(struct scalpelState *state, int error)
         msg = "Scalpel will write only to empty output directories to avoid\n"
             "mixing the output from multiple carving operations.\n"
             "Please specify a different output directory or delete the specified\noutput directory.\n";
-        fprintf(stderr, msg.c_str());
+        fprintf(stderr, "%s", msg.c_str());
         closeAuditFile(state->auditFile);
         throw std::runtime_error(msg);
         break;
@@ -461,7 +461,7 @@ void handleError(struct scalpelState *state, int error)
         // fatal--unable to write files, which may mean that disk space is exhausted.
         msg = "Scalpel was unable to write output files and will abort.\n"
             "This error generally indicates that disk space is exhausted.\n";
-        fprintf(stderr, msg.c_str());
+        fprintf(stderr, "%s", msg.c_str());
         closeAuditFile(state->auditFile);
         throw std::runtime_error(msg);
         break;

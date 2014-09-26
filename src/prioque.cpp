@@ -152,13 +152,13 @@ void nolock_add_to_queue(Queue * q, void *element, int priority)
             new_element = (Queue_element) malloc(sizeof(struct _Queue_element));
             if(new_element == 0) {
                 std::string msg ("Malloc failed in function add_to_queue()\n");
-                fprintf(stderr, msg.c_str());
+                fprintf(stderr, "%s", msg.c_str());
                 throw std::runtime_error(msg);
             }
             new_element->info = (void *)malloc(q->elementsize);
             if(new_element->info == 0) {
                 std::string msg("Malloc failed in function add_to_queue()\n");
-                fprintf(stderr, msg.c_str());
+                fprintf(stderr, "%s", msg.c_str());
                 throw std::runtime_error(msg);
             }
 
@@ -224,7 +224,7 @@ void remove_from_front(Queue * q, void *element)
 #if defined(CONSISTENCY_CHECKING)
     if(q->queue == 0) {
         std::string msg("Malloc failed in function remove_from_front()\n");
-        fprintf(stderr, msg.c_str());
+        fprintf(stderr, "%s", msg.c_str());
         throw std::runtime_error(msg);
     }
     else
@@ -256,7 +256,7 @@ void peek_at_current(Queue * q, void *element)
 #if defined(CONSISTENCY_CHECKING)
     if(q->queue == 0 || q->current == 0) {
         std::string msg("NULL pointer in function peek_at_current()\n");
-        fprintf(stderr, msg.c_str());
+        fprintf(stderr, "%s", msg.c_str());
         throw std::runtime_error(msg);
     }
     else
@@ -281,7 +281,7 @@ void *pointer_to_current(Queue * q)
 #if defined(CONSISTENCY_CHECKING)
     if(q->queue == 0 || q->current == 0) {
         std::string msg("NULL pointer in function pointer_to_current()\n");
-        fprintf(stderr, msg.c_str());
+        fprintf(stderr, "%s", msg.c_str());
         throw std::runtime_error(msg);
     }
     else
@@ -308,7 +308,7 @@ int current_priority(Queue * q)
 #if defined(CONSISTENCY_CHECKING)
     if(q->queue == 0 || q->current == 0) {
         std::string msg("NULL pointer in function peek_at_current()\n");
-        fprintf(stderr, msg.c_str());
+        fprintf(stderr, "%s", msg.c_str());
         throw std::runtime_error(msg);
     }
     else
@@ -333,7 +333,7 @@ void update_current(Queue * q, void *element)
 #if defined(CONSISTENCY_CHECKING)
     if(q->queue == 0 || q->current == 0) {
         std::string msg("Malloc failed in function update_current()\n");
-        fprintf(stderr, msg.c_str());
+        fprintf(stderr, "%s", msg.c_str());
         throw std::runtime_error(msg);
     }
     else
@@ -357,7 +357,7 @@ void delete_current(Queue * q)
 #if defined(CONSISTENCY_CHECKING)
     if(q->queue == 0 || q->current == 0) {
         std::string msg("Malloc failed in function delete_current()\n");
-        fprintf(stderr, msg.c_str());
+        fprintf(stderr, "%s", msg.c_str());
         throw std::runtime_error(msg);
     }
     else
@@ -411,12 +411,12 @@ void nolock_next_element(Queue * q)
 #if defined(CONSISTENCY_CHECKING)
     if(q->queue == 0) {
         std::string msg("NULL pointer in function next_element()\n");
-        fprintf(stderr, msg.c_str());
+        fprintf(stderr, "%s", msg.c_str());
         throw std::runtime_error(msg);
     }
     else if(q->current == 0) {
         std::string msg("Advance past end in NULL pointer in function next_element()\n");
-        fprintf(stderr, msg.c_str());
+        fprintf(stderr, "%s", msg.c_str());
         throw std::runtime_error(msg);
     }
     else
@@ -483,14 +483,14 @@ void copy_queue(Queue * q1, Queue * q2)
 
         if(new_element == 0) {
             std::string msg("Malloc failed in function copy_queue()\n");
-            fprintf(stderr, msg.c_str());
+            fprintf(stderr, "%s", msg.c_str());
             throw std::runtime_error(msg);
         }
 
         new_element->info = (void *)malloc(q1->elementsize);
         if(new_element->info == 0) {
             std::string msg("Malloc failed in function copy_queue()\n");
-            fprintf(stderr, msg.c_str());
+            fprintf(stderr, "%s", msg.c_str());
             throw std::runtime_error(msg);
         }
         memcpy(new_element->info, temp->info, q1->elementsize);
@@ -600,7 +600,7 @@ void local_peek_at_current(Context * ctx, void *element)
 #if defined(CONSISTENCY_CHECKING)
     if(ctx->queue == 0 || ctx->current == 0) {
         std::string msg("NULL pointer in function peek_at_current()\n");
-        fprintf(stderr, msg.c_str());
+        fprintf(stderr, "%s", msg.c_str());
         throw std::runtime_error(msg);
     }
     else
@@ -626,7 +626,7 @@ void *local_pointer_to_current(Context * ctx)
 #if defined(CONSISTENCY_CHECKING)
     if(ctx->queue == 0 || ctx->current == 0) {
         std::string msg("NULL pointer in function pointer_to_current()\n");
-        fprintf(stderr, msg.c_str());
+        fprintf(stderr, "%s", msg.c_str());
         throw std::runtime_error(msg);
     }
     else
@@ -653,7 +653,7 @@ int local_current_priority(Context * ctx)
 #if defined(CONSISTENCY_CHECKING)
     if(ctx->queue == 0 || ctx->current == 0) {
         std::string msg("NULL pointer in function peek_at_current()\n");
-        fprintf(stderr, msg.c_str());
+        fprintf(stderr, "%s", msg.c_str());
         throw std::runtime_error(msg);
     }
     else
@@ -677,7 +677,7 @@ void local_update_current(Context * ctx, void *element)
 #if defined(CONSISTENCY_CHECKING)
     if(ctx->queue == 0 || ctx->current == 0) {
         std::string msg("NULL pointer in function update_current()\n");
-        fprintf(stderr, msg.c_str());
+        fprintf(stderr, "%s", msg.c_str());
         throw std::runtime_error(msg);
     }
     else
@@ -701,7 +701,7 @@ void local_delete_current(Context * ctx)
 #if defined(CONSISTENCY_CHECKING)
     if(ctx->queue == 0 || ctx->current == 0) {
         std::string msg("NULL pointer in function delete_current()\n");
-        fprintf(stderr, msg.c_str());
+        fprintf(stderr, "%s", msg.c_str());
         throw std::runtime_error(msg);
     }
     else
@@ -755,12 +755,12 @@ void local_nolock_next_element(Context * ctx)
 #if defined(CONSISTENCY_CHECKING)
     if(ctx->queue == 0) {
         std::string msg("NULL pointer in function next_element()\n");
-        fprintf(stderr, msg.c_str());
+        fprintf(stderr, "%s", msg.c_str());
         throw std::runtime_error(msg);
     }
     else if(ctx->current == 0) {
         std::string msg("Advance past end in NULL pointer in function next_element()\n");
-        fprintf(stderr, msg.c_str());
+        fprintf(stderr, "%s", msg.c_str());
         throw std::runtime_error(msg);
     }
     else

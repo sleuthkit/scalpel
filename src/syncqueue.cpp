@@ -71,7 +71,7 @@ syncqueue_t *syncqueue_init(const char *qname, unsigned long size) {
     q = (syncqueue_t *) calloc(1, sizeof(syncqueue_t));
     if(q == NULL) {
         std::string msg("Couldn't create queue! Aborting.");
-        fprintf(stderr, msg.c_str());
+        fprintf(stderr, "%s", msg.c_str());
         throw std::runtime_error(msg);
     }
 

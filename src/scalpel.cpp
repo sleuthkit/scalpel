@@ -118,7 +118,7 @@ int extractSearchSpecData(struct scalpelState *state,
         ss << "ERROR: GPU search for regex headers is not supported!\n";
         ss << "Please modify the config file for non-regex headers only.\n";
         std::string msg = ss.str();
-        fprintf(stderr, msg.c_str());
+        fprintf(stderr, "%s", msg.c_str());
         throw std::runtime_error(msg);
 #endif
 
@@ -152,7 +152,7 @@ int extractSearchSpecData(struct scalpelState *state,
         ss << "ERROR: GPU search for regex footers is not supported!\n";
         ss << "Please modify the config file for non-regex footers only.\n";
         std::string msg = ss.str();
-        fprintf(stderr, msg.c_str());
+        fprintf(stderr, "%s", msg.c_str());
         throw std::runtime_error(msg);
 #endif  
 
