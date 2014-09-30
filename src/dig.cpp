@@ -2722,7 +2722,7 @@ int init_threading_model(struct scalpelState *state) {
         if(pthread_mutex_init(&workavailable[i], 0)) {
             //return SCALPEL_ERROR_PTHREAD_FAILURE;
             std::string msg ("COULDN'T CREATE MUTEX\n");
-            fprintf(stderr, msg.c_str());
+            fprintf(stderr, "%s", msg.c_str());
             throw std::runtime_error(msg);
         }
 
@@ -2730,7 +2730,7 @@ int init_threading_model(struct scalpelState *state) {
 
         if(pthread_mutex_init(&workcomplete[i], 0)) {
             std::string msg ("COULDN'T CREATE MUTEX\n");
-            fprintf(stderr, msg.c_str());
+            fprintf(stderr, "%s", msg.c_str());
             throw std::runtime_error(msg);
         }		
 
@@ -2743,7 +2743,7 @@ int init_threading_model(struct scalpelState *state) {
             (&searchthreads[i], NULL, &threadedFindAll, &threadargs[i])) {
                 //return SCALPEL_ERROR_PTHREAD_FAILURE;
                 std::string msg ("COULDN'T CREATE THREAD\n");
-                fprintf(stderr, msg.c_str());
+                fprintf(stderr, "%s", msg.c_str());
                 throw std::runtime_error(msg);
         }
     }
