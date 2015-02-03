@@ -61,7 +61,9 @@ Scalpel options are described in the Scalpel man page, "scalpel.1".
 You may also execute Scalpel w/o any command line arguments to see a
 list of options.
 
-NOTE: Compilation is necessary on Unix platforms and on Mac OS X.  For
+USAGE: scalpel needs a config file(scalpel.conf) in the current working directory.
+
+NOTE: Compilation is necessary on Unix platforms and on Mac OS X.  For Mac OS X, these four package is needed - autoconf, automake, libtool, tre - which can be downloaded through brew. For
 Windows platforms, a precompiled scalpel.exe is provided.  If you do
 wish to recompile Scalpel on Windows, you'll need a mingw (gcc)
 setup. Scalpel will not compile using Visual Studio C compilers.  Note
@@ -86,7 +88,7 @@ permanent place, just copy "scalpel" (or "scalpel.exe") and
 "scalpel.1" to appropriate locations, e.g., on Linux, "/usr/local/bin"
 and "/usr/local/man/man1", respectively.  On Windows, you'll also need
 to copy the pthreads and tre regular expression library dlls into the
-same directory as "scalpel.exe".
+same directory as "scalpel.exe". On Mac OS X, you may need those four packages - autoconf, automake, libtool, tre - which can be downloaded through brew.
 
 
 OTHER SUPPORTED PLATFORMS
@@ -117,7 +119,7 @@ replaced with a more robust facility in the next major release.
 
 DEPENDENCIES:
 
-Scalpel uses the POSIX threads library.  On Win32, Scalpel is
+Scalpel uses the POSIX threads library.  On Mac OSX, you need tre package because scalpel use it. On Win32, Scalpel is
 distributed with the Pthreads-win32 - POSIX Threads Library for Win32,
 which is Copyright(C) 1998 John E. Bossom and Copyright(C) 1999,2005
 by Pthreads-win32 contributors.  This library is licensed under the LGPL.
