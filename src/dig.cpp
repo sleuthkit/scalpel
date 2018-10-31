@@ -378,10 +378,10 @@ static int setupAuditFile(struct scalpelState *state) {
 
 
     if(state->skip) {
-        fprintf(state->auditFile, "\nSkipped the first %"PRIu64 "bytes of %s...\n",
+        fprintf(state->auditFile, "\nSkipped the first %" PRIu64 "bytes of %s...\n",
             state->skip, scalpelInputGetId(state->inReader));
         if(state->modeVerbose) {
-            fprintf(stdout, "\nSkipped the first %"PRIu64 "bytes of %s...\n",
+            fprintf(stdout, "\nSkipped the first %" PRIu64 "bytes of %s...\n",
                 state->skip, scalpelInputGetId(state->inReader));
         }
     }
@@ -448,7 +448,7 @@ digBuffer(struct scalpelState *state, unsigned long long lengthofbuf,
             // found a header--record location in header offsets database
             if(state->modeVerbose) {
 
-                fprintf(stdout, "A %s header was found at : %"PRIu64 "\n",
+                fprintf(stdout, "A %s header was found at : %" PRIu64 "\n",
                     currentneedle->suffix,
                     positionUseCoverageBlockmap(state, startLocation));
 
@@ -478,7 +478,7 @@ digBuffer(struct scalpelState *state, unsigned long long lengthofbuf,
 
                     if(state->modeVerbose) {
                         fprintf(stdout,
-                            "Memory reallocation performed, total header storage = %"PRIu64 "\n",
+                            "Memory reallocation performed, total header storage = %" PRIu64 "\n",
                             currentneedle->offsets.headerstorage);
                     }
             }
@@ -494,7 +494,7 @@ digBuffer(struct scalpelState *state, unsigned long long lengthofbuf,
             // found a footer--record location in footer offsets database
             if(state->modeVerbose) {
 
-                fprintf(stdout, "A %s footer was found at : %"PRIu64 "\n",
+                fprintf(stdout, "A %s footer was found at : %" PRIu64 "\n",
                     currentneedle->suffix,
                     positionUseCoverageBlockmap(state, startLocation));
 
@@ -524,7 +524,7 @@ digBuffer(struct scalpelState *state, unsigned long long lengthofbuf,
                     if(state->modeVerbose) {
 
                         fprintf(stdout,
-                            "Memory reallocation performed, total footer storage = %"PRIu64 "\n",
+                            "Memory reallocation performed, total footer storage = %" PRIu64 "\n",
                             currentneedle->offsets.footerstorage);
                     }
             }
@@ -618,7 +618,7 @@ digBuffer(struct scalpelState *state, unsigned long long lengthofbuf,
             // found a header--record location in header offsets database
             if(state->modeVerbose) {
 
-                fprintf(stdout, "A %s header was found at : %"PRIu64 "\n",
+                fprintf(stdout, "A %s header was found at : %" PRIu64 "\n",
                     currentneedle->suffix,
                     positionUseCoverageBlockmap(state, startLocation));
             }
@@ -647,7 +647,7 @@ digBuffer(struct scalpelState *state, unsigned long long lengthofbuf,
                     if(state->modeVerbose) {
 
                         fprintf(stdout,
-                            "Memory reallocation performed, total header storage = %"PRIu64 "\n",
+                            "Memory reallocation performed, total header storage = %" PRIu64 "\n",
                             currentneedle->offsets.headerstorage);
 
                     }
@@ -756,7 +756,7 @@ digBuffer(struct scalpelState *state, unsigned long long lengthofbuf,
             startLocation = offset + (foundat[needlenum][i] - readbuffer);
             if(state->modeVerbose) {
 
-                fprintf(stdout, "A %s footer was found at : %"PRIu64 "\n",
+                fprintf(stdout, "A %s footer was found at : %" PRIu64 "\n",
                     currentneedle->suffix,
                     positionUseCoverageBlockmap(state, startLocation));
             }
@@ -784,7 +784,7 @@ digBuffer(struct scalpelState *state, unsigned long long lengthofbuf,
                     if(state->modeVerbose) {
 
                         fprintf(stdout,
-                            "Memory reallocation performed, total footer storage = %"PRIu64 "\n",
+                            "Memory reallocation performed, total footer storage = %" PRIu64 "\n",
                             currentneedle->offsets.footerstorage);
                     }
             }
@@ -991,7 +991,7 @@ void *streaming_reader(void *sss) {
         state->inReader)) > longestneedle - 1) {
 
             if(state->modeVerbose) {
-                fprintf(stdout, "Read %"PRIu64 " bytes from image file.\n", bytesread);
+                fprintf(stdout, "Read %" PRIu64 " bytes from image file.\n", bytesread);
             }
 
             if((err = scalpelInputGetError(state->inReader))) {
@@ -1106,7 +1106,7 @@ int digImageFile(struct scalpelState *state) {
 
 
     if(state->modeVerbose) {
-        fprintf(stdout, "Total file size is %"PRIu64 " bytes\n", filesize);
+        fprintf(stdout, "Total file size is %" PRIu64 " bytes\n", filesize);
     }
 
 
@@ -1537,7 +1537,7 @@ int carveImageFile(struct scalpelState *state) {
             fprintf(stdout, "%s", currentneedle->endtext);
         }
 
-        fprintf(stdout, "\" --> %"PRIu64 " files\n", currentneedle->numfilestocarve);
+        fprintf(stdout, "\" --> %" PRIu64 " files\n", currentneedle->numfilestocarve);
 
 
     }
@@ -1915,7 +1915,7 @@ static int
             (unsigned long
             long)(ceil((double)filesize / (double)state->coverageblocksize));
 
-        fprintf(stdout, "# of blocks in coverage blockmap is %"PRIu64 ".\n",
+        fprintf(stdout, "# of blocks in coverage blockmap is %" PRIu64 ".\n",
             state->coveragenumblocks);
 
 
@@ -1970,7 +1970,7 @@ static int
             (unsigned long long)ceil((double)filesize /
             (double)state->coverageblocksize);
 
-        fprintf(stdout, "# of blocks in coverage blockmap is %"PRIu64 ".\n",
+        fprintf(stdout, "# of blocks in coverage blockmap is %" PRIu64 ".\n",
             state->coveragenumblocks);
 
         fprintf(stdout, "Allocating and clearing in-core coverage bitmap.\n");
@@ -2374,7 +2374,7 @@ static off64_t ftello_use_coverage_map(struct scalpelState *state, ScalpelInputR
 
         if(state->modeVerbose && state->useCoverageBlockmap) {
             fprintf(stdout,
-                "Coverage map decreased current file position by %"PRIu64 " bytes.\n",
+                "Coverage map decreased current file position by %" PRIu64 " bytes.\n",
                 (unsigned long long)decrease);
         }
     }
@@ -2399,7 +2399,7 @@ fread_use_coverage_map(struct scalpelState *state, void *ptr,
     if(state->useCoverageBlockmap) {
         if(state->modeVerbose) {
             fprintf(stdout,
-                "Issuing coverage map-based READ, wants %"PRIu64 " bytes.\n",
+                "Issuing coverage map-based READ, wants %" PRIu64 " bytes.\n",
                 neededbytes);
         }
 
@@ -2425,7 +2425,7 @@ fread_use_coverage_map(struct scalpelState *state, void *ptr,
 
                 if(state->modeVerbose) {
                     fprintf(stdout,
-                        "fread using coverage map to skip %"PRIu64 " bytes.\n", bytestoskip);
+                        "fread using coverage map to skip %" PRIu64 " bytes.\n", bytestoskip);
                 }
 
                 scalpelInputSeeko(inReader, (off64_t) bytestoskip, SCALPEL_SEEK_CUR);
@@ -2450,7 +2450,7 @@ fread_use_coverage_map(struct scalpelState *state, void *ptr,
 
                 if(state->modeVerbose) {
                     fprintf(stdout,
-                        "fread using coverage map found %"PRIu64 " consecutive bytes.\n",
+                        "fread using coverage map found %" PRIu64 " consecutive bytes.\n",
                         bytestoread);
                 }
 
@@ -2465,7 +2465,7 @@ fread_use_coverage_map(struct scalpelState *state, void *ptr,
                 curpos += bytestoread;
 
                 if(state->modeVerbose) {
-                    fprintf(stdout, "fread using coverage map read %"PRIu64 " bytes.\n",
+                    fprintf(stdout, "fread using coverage map read %" PRIu64 " bytes.\n",
                         bytesread);
                 }
         }
@@ -2879,7 +2879,7 @@ static int writeHeaderFooterDatabase(struct scalpelState *state) {
             }
 
             // # of headers
-            if(fprintf(dbfile, "%"PRIu64 "\n", currentneedle->offsets.numheaders)
+            if(fprintf(dbfile, "%" PRIu64 "\n", currentneedle->offsets.numheaders)
                 <= 0) {
 
                     fprintf(stderr,
@@ -2893,7 +2893,7 @@ static int writeHeaderFooterDatabase(struct scalpelState *state) {
             for(i = 0; i < currentneedle->offsets.numheaders; i++) {
 #ifdef _WIN32
                 if(fprintf
-                    (dbfile, "%"PRIu64 "\n",
+                    (dbfile, "%" PRIu64 "\n",
                     positionUseCoverageBlockmap(state,
                     currentneedle->offsets.
                     headers[i])) <= 0) {
@@ -2913,7 +2913,7 @@ static int writeHeaderFooterDatabase(struct scalpelState *state) {
             }
 
             // # of footers
-            if(fprintf(dbfile, "%"PRIu64 "\n", currentneedle->offsets.numfooters)
+            if(fprintf(dbfile, "%" PRIu64 "\n", currentneedle->offsets.numfooters)
                 <= 0) {
                     fprintf(stderr,
                         "Error writing to header/footer database file: %s\n", fn);
@@ -2925,7 +2925,7 @@ static int writeHeaderFooterDatabase(struct scalpelState *state) {
             // all footer positions for current suffix
             for(i = 0; i < currentneedle->offsets.numfooters; i++) {
                 if(fprintf
-                    (dbfile, "%"PRIu64 "\n",
+                    (dbfile, "%" PRIu64 "\n",
                     positionUseCoverageBlockmap(state,
                     currentneedle->offsets.
                     footers[i])) <= 0) {

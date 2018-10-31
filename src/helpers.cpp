@@ -528,7 +528,7 @@ int skipInFile(struct scalpelState *state, ScalpelInputReader * inReader)
         if((scalpelInputSeeko(inReader, state->skip, SCALPEL_SEEK_SET))) {
 
             fprintf(stderr,
-                "ERROR: Couldn't skip %"PRIu64 " bytes at the start of input file %s\n",
+                "ERROR: Couldn't skip %" PRIu64 " bytes at the start of input file %s\n",
                 state->skip, inputId);
 
 
@@ -543,7 +543,7 @@ int skipInFile(struct scalpelState *state, ScalpelInputReader * inReader)
         }
         else {
 
-            fprintf(stderr, "\nSkipped the first %"PRIu64 " bytes of %s...\n",
+            fprintf(stderr, "\nSkipped the first %" PRIu64 " bytes of %s...\n",
                 state->skip, inputId);
 
 
