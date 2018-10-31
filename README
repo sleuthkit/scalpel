@@ -1,3 +1,6 @@
+Install latest JDK
+set JAVA_HOME and JDK_HOME system variable
+
 ********************************************************************
 
 As of 6/27/2013 Scalpel has been released under the Apache 2.0 License
