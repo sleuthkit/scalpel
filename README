@@ -1,5 +1,6 @@
 Install latest JDK
 set JAVA_HOME and JDK_HOME system variable
+PUT libiberty.a to C:\MunGW\lib
 
 ********************************************************************
 
@@ -74,13 +75,8 @@ int the future.
 
 COMPILE INSTRUCTIONS ON SUPPORTED PLATFORMS:
 
-Linux/Mac OS X:    
-% ./bootstrap
-% ./configure 
-% make
 
 Windows (mingw):
-cd src 
 mingw32-make -f Makefile.win
 
 
