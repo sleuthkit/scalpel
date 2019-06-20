@@ -1,7 +1,6 @@
 FROM ubuntu:16.04
 
 # ADD https://github.com/sleuthkit/scalpel/archive/master.zip /
-COPY . /scalpel
 
 RUN apt-get update && \
   apt-get install -y -qq --no-install-recommends \
@@ -14,6 +13,7 @@ RUN apt-get update && \
       unzip && \
   rm -rf /var/lib/apt/lists/*
 
+COPY . /scalpel
 WORKDIR /scalpel
 RUN ./bootstrap && ./configure --disable-shared && make
-CMD ["./scalpel", "-o /recovery", "device.img"]
+ENTRYPOINT ["/scalpel/entrypoint.sh"]

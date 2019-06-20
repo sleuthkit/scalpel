@@ -9,7 +9,7 @@ In courtesy of https://github.com/sleuthkit/scalpel
 ```sh
 docker run --rm -it \
   -v $(pwd)/device.img:/scalpel/device.img \
-  -v $(pwd)/recovery:/recovery \
+  -v $(pwd)/recovery:/scalpel/recovery \
   s4ros/scalpel
 ```
 
@@ -18,6 +18,8 @@ There are two docker volumes that you need to mount to recover any files from th
 
 * `/scalpel/device.img` - this has to be the image file of the device you want to recovery data from
 * `/recovery` - this is the place where any recovered files will be written
+
+##
 
 ********************************************************************
 
