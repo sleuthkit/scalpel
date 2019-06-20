@@ -4,14 +4,15 @@ FROM ubuntu:16.04
 COPY . /scalpel
 
 RUN apt-get update && \
-  apt-get install -y -qq \
+  apt-get install -y -qq --no-install-recommends \
       automake \
       default-jdk \
       g++ \
       libtool \
       libtre-dev \
       make \
-      unzip
+      unzip && \
+  rm -rf /var/lib/apt/lists/*
 
 WORKDIR /scalpel
 RUN ./bootstrap && ./configure --disable-shared && make
