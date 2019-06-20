@@ -1,3 +1,6 @@
+pendrive.img
+device.img
+recovery
 # Compiled Object files
 *.slo
 *.lo
