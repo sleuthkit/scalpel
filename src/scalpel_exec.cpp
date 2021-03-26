@@ -329,7 +329,7 @@ static void digAllFiles(char **argv, struct scalpelState *state) {
 // parse command line arguments
 //TODO should not have notion of static (should return bools or so and pass them to lib function)
 void processCommandLineArgs(int argc, char **argv, struct scalpelState *state) {
-    char i;
+    int i;
     int numopts = 1;
 
     while ((i = getopt(argc, argv, "behvVu:ndpq:rc:o:s:i:m:M:O")) != -1) {
