@@ -475,7 +475,7 @@ static unsigned long long tskDataSourceTellO(ScalpelInputReader * const reader) 
 
 	detachThread();
 
-	fprintf(stdout, "tskDataSourceTellO() ret %"PRIu64 "\n", joff );
+	fprintf(stdout, "tskDataSourceTellO() ret %" PRIu64 "\n", joff );
 
 	return (unsigned long long) joff;
 }
@@ -535,13 +535,13 @@ static int tskDataSourceOpen(ScalpelInputReader * const reader) {
 		fprintf(stdout, "tskDataSourceOpen() WARNING stream already open\n");
 		//already open, should really close first, reset
 		jlong zerOff = env->CallLongMethod(tskData->jInputStream, tskData->jSeekMethodId, (jlong)0);
-		fprintf(stdout, "tskDataSourceOpen() rewinded, new offset: %"PRI64 "\n", (long long) zerOff);
+		fprintf(stdout, "tskDataSourceOpen() rewinded, new offset: %" PRI64 "\n", (long long) zerOff);
 	}
 	else if (!tskData->firstOpen) {
 		//closed but had already been open, so need to rewind to start
 		//const jlong jnewOff =
 		jlong zerOff = env->CallLongMethod(tskData->jInputStream, tskData->jSeekMethodId, (jlong)0);
-		fprintf(stdout, "tskDataSourceOpen() rewinded, new offset: %"PRI64 "\n", (long long) zerOff);
+		fprintf(stdout, "tskDataSourceOpen() rewinded, new offset: %" PRI64 "\n", (long long) zerOff);
 	}
 
 

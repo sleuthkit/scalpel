@@ -141,7 +141,7 @@ int main(int argc, char **argv) {
     }
 
     fprintf(stdout,
-        "\nScalpel is done, files carved = %"PRIu64 ", elapsed  = %ld secs.\n",
+        "\nScalpel is done, files carved = %" PRIu64 ", elapsed  = %ld secs.\n",
         state.fileswritten, (int)time(0) - starttime);
 
     destroy_threading_model(&state);
@@ -348,7 +348,7 @@ void processCommandLineArgs(int argc, char **argv, struct scalpelState *state) {
             numopts++;
             state->skip = strtoull(optarg, NULL, 10);
             fprintf(stdout,
-                "Skipping the first %"PRIu64 " bytes of each image file.\n", state->skip);
+                "Skipping the first %" PRIu64 " bytes of each image file.\n", state->skip);
             break;
 
         case 'c':

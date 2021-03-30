@@ -1,3 +1,7 @@
+Install latest JDK
+set JAVA_HOME and JDK_HOME system variable
+PUT libiberty.a to C:\MunGW\lib
+
 ********************************************************************
 
 As of 6/27/2013 Scalpel has been released under the Apache 2.0 License
@@ -75,13 +79,8 @@ int the future.
 
 COMPILE INSTRUCTIONS ON SUPPORTED PLATFORMS:
 
-Linux/Mac OS X:    
-% ./bootstrap
-% ./configure 
-% make
 
 Windows (mingw):
-cd src 
 mingw32-make -f Makefile.win
 
 
