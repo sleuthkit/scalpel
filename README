@@ -61,17 +61,35 @@ simply uncomment all file carving patterns; this wastes time and will
 generate a huge number of false positives.  Instead, uncomment only
 the patterns for the file types you need.
 
+To run scalpel, "scalpel.conf" must be specified in the current working 
+direcotry.
+
 Scalpel options are described in the Scalpel man page, "scalpel.1".
 You may also execute Scalpel w/o any command line arguments to see a
 list of options.
 
-NOTE: Compilation is necessary on Unix platforms and on Mac OS X.  For
-Windows platforms, a precompiled scalpel.exe is provided.  If you do
+
+COMPILATION PREREQUISITES:
+
+NOTE: Compilation is necessary on Unix platforms and on Mac OS X.
+
+o For Mac OS X, these four package is needed for build dependencies - 
+autoconf, automake, libtool, tre. You can install these package through 
+homebrew by running `brew install autoconf automake libtool tre`.
+
+o For Linux, these package is required - make, autoconf, automake, 
+libtool, tre. Use any method to install these package. If you are using 
+Debian-like linux, you can install them through `apt-get` by running 
+`apt-get install make autoconf automake libtool tre-agrep libtre5 
+libtre-dev`.
+
+o For Windows platforms, a precompiled scalpel.exe is provided.  If you do
 wish to recompile Scalpel on Windows, you'll need a mingw (gcc)
 setup. Scalpel will not compile using Visual Studio C compilers.  Note
 that our compilation environment for Windows is currently 32-bit; we
 haven't tested on the 64-bit version of mingw, but will address this
 int the future.
+
 
 COMPILE INSTRUCTIONS ON SUPPORTED PLATFORMS:
 
@@ -121,10 +139,13 @@ replaced with a more robust facility in the next major release.
 
 DEPENDENCIES:
 
-Scalpel uses the POSIX threads library.  On Win32, Scalpel is
-distributed with the Pthreads-win32 - POSIX Threads Library for Win32,
-which is Copyright(C) 1998 John E. Bossom and Copyright(C) 1999,2005
-by Pthreads-win32 contributors.  This library is licensed under the LGPL.
+Scalpel uses the POSIX threads library and depends on the POSIX 
+compliant regexp matching library `tre`.
+
+On Win32, Scalpel is distributed with the Pthreads-win32 - POSIX Threads 
+Library for Win32, which is Copyright(C) 1998 John E. Bossom and 
+Copyright(C) 1999,2005 by Pthreads-win32 contributors.  This library 
+is licensed under the LGPL.
 
 Scalpel for Win32 uses the tre regular expression library and is
 distributed with tre-0.7.5, which is licensed under the LGPL.
